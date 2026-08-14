@@ -116,6 +116,24 @@
 .inline-error-detail { color: #52525b; }
 .inline-retry { font-size: 12px; font-weight: 500; color: #dc2626; padding: 4px 10px; border: 1px solid #dc262633; border-radius: 5px; }
 
+.demo-foot {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.privacy-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: #a1a1aa;
+}
+.remaining { font-size: 11.5px; color: #52525b; }
+.remaining .mono { font-weight: 600; color: #6d42d9; }
+
 @media (max-width: 720px) {
   .slots { grid-template-columns: 1fr; }
 }

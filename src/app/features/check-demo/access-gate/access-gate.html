@@ -1,0 +1,138 @@
+<div class="overlay" (click)="onOverlayClick($event)" (keydown.escape)="onEscape()" tabindex="-1">
+  <div class="dialog" role="dialog" aria-modal="true">
+    <button type="button" class="close focus-ring" aria-label="Cerrar" (click)="close()">×</button>
+
+    @switch (activeStep()) {
+      @case ('register') {
+        <div class="kicker">CheckToData</div>
+        <h3>{{ i18n.t().gate_title }}</h3>
+        <p class="sub">{{ i18n.t().gate_sub }}</p>
+
+        <form class="form" novalidate (submit)="$event.preventDefault(); submitRegister()">
+          <div class="field">
+            <label for="gate-name">{{ i18n.t().f_fullname }}</label>
+            <input
+              id="gate-name"
+              type="text"
+              name="name"
+              autocomplete="name"
+              maxlength="120"
+              [(ngModel)]="name"
+              [class.error]="fieldErrors().name"
+            />
+            @if (fieldErrors().name) {
+              <div class="error-msg">{{ i18n.t().err_name_required }}</div>
+            }
+          </div>
+
+          <div class="field">
+            <label for="gate-company">{{ i18n.t().f_company }}</label>
+            <input
+              id="gate-company"
+              type="text"
+              name="company"
+              autocomplete="organization"
+              maxlength="160"
+              [(ngModel)]="company"
+              [class.error]="fieldErrors().company"
+            />
+            @if (fieldErrors().company) {
+              <div class="error-msg">{{ i18n.t().err_name_required }}</div>
+            }
+          </div>
+
+          <div class="field">
+            <label for="gate-email">{{ i18n.t().f_email }}</label>
+            <input
+              id="gate-email"
+              type="email"
+              name="email"
+              autocomplete="email"
+              maxlength="200"
+              [(ngModel)]="email"
+              [class.error]="fieldErrors().email"
+            />
+            @if (fieldErrors().email) {
+              <div class="error-msg">{{ i18n.t().err_email }}</div>
+            }
+          </div>
+
+          <!-- Honeypot: off-screen and hidden from assistive tech; only bots fill it. -->
+          <div class="honeypot" aria-hidden="true">
+            <label for="gate-website">Website</label>
+            <input id="gate-website" type="text" name="website" tabindex="-1" autocomplete="off" [(ngModel)]="website" />
+          </div>
+
+          @if (registerError(); as err) {
+            <div class="form-error">{{ err }}</div>
+          }
+
+          <button type="submit" class="submit focus-ring" [disabled]="busy()">
+            @if (busy()) {
+              <span class="spinner" aria-hidden="true"></span>
+            }
+            {{ busy() ? i18n.t().f_sending : i18n.t().gate_submit }}
+          </button>
+
+          <button type="button" class="linkish focus-ring" (click)="goTo('key')">
+            {{ i18n.t().gate_have_key }}
+          </button>
+        </form>
+
+        <p class="privacy">{{ i18n.t().gate_privacy }}</p>
+      }
+
+      @case ('key') {
+        <div class="kicker">CheckToData</div>
+        <h3>{{ i18n.t().gate_key_title }}</h3>
+        @if (mailSentTo(); as sentTo) {
+          <p class="sub">{{ i18n.t().gate_key_sent }} <span class="mono">{{ sentTo }}</span></p>
+        } @else {
+          <p class="sub">{{ i18n.t().gate_key_sent }}</p>
+        }
+
+        <form class="form" novalidate (submit)="$event.preventDefault(); submitKey()">
+          <div class="field">
+            <label for="gate-key">{{ i18n.t().gate_key_label }}</label>
+            <input
+              id="gate-key"
+              class="key-input mono"
+              type="text"
+              name="key"
+              autocomplete="off"
+              spellcheck="false"
+              maxlength="9"
+              placeholder="XXXX-XXXX"
+              [(ngModel)]="keyInput"
+              [class.error]="keyError()"
+            />
+            @if (keyError(); as err) {
+              <div class="error-msg">{{ err }}</div>
+            }
+          </div>
+
+          <button type="submit" class="submit focus-ring" [disabled]="busy()">
+            @if (busy()) {
+              <span class="spinner" aria-hidden="true"></span>
+            }
+            {{ i18n.t().gate_key_submit }}
+          </button>
+
+          <button type="button" class="linkish focus-ring" (click)="goTo('register')">
+            {{ i18n.t().gate_no_key }}
+          </button>
+        </form>
+      }
+
+      @case ('limit') {
+        <div class="kicker">CheckToData</div>
+        <h3>{{ limitTitle() }}</h3>
+        <p class="sub">{{ i18n.t().gate_limit_body }}</p>
+
+        <button type="button" class="submit focus-ring" (click)="goToContact()">
+          {{ i18n.t().gate_limit_cta }}
+        </button>
+      }
+    }
+  </div>
+</div>
