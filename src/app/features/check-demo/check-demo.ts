@@ -1,16 +1,19 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { forkJoin, of, TimeoutError } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
+import { DemoAccessService } from '../../core/demo-access.service';
 import { I18nService } from '../../core/i18n.service';
 import { IcrApiService } from '../../core/icr-api.service';
+import { ToastService } from '../../core/toast.service';
 import { DemoStatus, EndorseResponse, PredictResponse } from '../../core/models';
 import { loadSampleBack, loadSampleFront } from '../../shared/sample-check.util';
+import { AccessGateComponent, GateMode } from './access-gate/access-gate';
 import { UploadDropzoneComponent } from './upload-dropzone/upload-dropzone';
 import { ResultsComponent } from '../results/results';
 
 @Component({
   selector: 'app-check-demo',
-  imports: [UploadDropzoneComponent, ResultsComponent],
+  imports: [AccessGateComponent, UploadDropzoneComponent, ResultsComponent],
   templateUrl: './check-demo.html',
   styleUrl: './check-demo.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -22,7 +25,13 @@ export class CheckDemoComponent {
   private static readonly COLD_START_MIN_TOTAL_MS = 4000;
 
   protected readonly i18n = inject(I18nService);
+  protected readonly access = inject(DemoAccessService);
   private readonly icrApi = inject(IcrApiService);
+  private readonly toasts = inject(ToastService);
+
+  protected readonly gateOpen = signal(false);
+  protected readonly gateMode = signal<GateMode>('register');
+  protected readonly limitReason = signal<'expired' | 'exhausted'>('exhausted');
 
   protected readonly frontFile = signal<File | null>(null);
   protected readonly backFile = signal<File | null>(null);
@@ -95,7 +104,50 @@ export class CheckDemoComponent {
     this.status.set('idle');
   }
 
+  /**
+   * Gate keeper: a run needs a server-validated key with quota. The pipeline
+   * itself only starts after use.php authorizes (and decrements) this run.
+   */
   processCheck(): void {
+    const front = this.frontFile();
+    if (!front) return;
+
+    if (!this.access.key()) {
+      this.gateMode.set('register');
+      this.gateOpen.set(true);
+      return;
+    }
+
+    this.access.authorize().subscribe({
+      next: (balance) => {
+        this.access.applyBalance(balance);
+        this.runPipeline();
+      },
+      error: (err: unknown) => {
+        const code = DemoAccessService.errorCode(err);
+        if (code === 'invalid_key') {
+          // Stored key no longer exists server-side (e.g. DB pruned) — re-register.
+          this.access.clear();
+          this.gateMode.set('register');
+          this.gateOpen.set(true);
+        } else if (code === 'expired' || code === 'exhausted') {
+          this.limitReason.set(code);
+          this.gateMode.set('limit');
+          this.gateOpen.set(true);
+        } else {
+          this.toasts.error(this.i18n.t().gate_authorize_failed);
+        }
+      },
+    });
+  }
+
+  onGateUnlocked(): void {
+    this.gateOpen.set(false);
+    // Resume the pending intent: the visitor clicked "process" to get here.
+    this.processCheck();
+  }
+
+  private runPipeline(): void {
     const front = this.frontFile();
     if (!front) return;
 
@@ -124,6 +176,16 @@ export class CheckDemoComponent {
         catchError((err) => {
           this.status.set('error');
           this.errorMsg.set(this.extractErrorMessage(err));
+          // Failed runs get refunded server-side, so a cold-start timeout does
+          // not consume the visitor's trial. Metrics carry numbers only.
+          this.access.reportMetrics(
+            DemoAccessService.metricsFrom(null, {
+              success: false,
+              clientMs: performance.now() - clientStart,
+              withBack: !!back,
+              coldStart: false,
+            }),
+          );
           return of(null);
         }),
         finalize(() => {
@@ -141,6 +203,14 @@ export class CheckDemoComponent {
         this.result.set(res.predict);
         this.endorseResult.set(res.endorse);
         this.status.set('results');
+        this.access.reportMetrics(
+          DemoAccessService.metricsFrom(res.predict, {
+            success: true,
+            clientMs: clientElapsedMs,
+            withBack: !!res.endorse,
+            coldStart: this.coldStartDetected(),
+          }),
+        );
       });
   }
 

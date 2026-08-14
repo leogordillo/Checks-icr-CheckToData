@@ -9,6 +9,7 @@ backend propio salvo un único script PHP para el formulario de contacto.
 |---|---|
 | [deployment.md](deployment.md) | Cómo compilar y publicar el sitio por FTP en Donweb |
 | [contact-form.md](contact-form.md) | Formulario de contacto: configuración de credenciales, arquitectura, diagnóstico |
+| [demo-access.md](demo-access.md) | Registro con clave por email para usar la demo: cupos, base SQLite, métricas |
 | [troubleshooting.md](troubleshooting.md) | Problemas conocidos y trampas ya resueltas |
 
 ## Panorama general
@@ -22,10 +23,12 @@ Navegador ──► checktodata.com (Donweb, detrás de Cloudflare)
                                           (FastAPI + ONNX, repo aparte)
 ```
 
-El sitio es **estático**: se sirve tal cual desde el hosting compartido. Las dos únicas
-piezas dinámicas son:
+El sitio es **estático**: se sirve tal cual desde el hosting compartido. Las piezas
+dinámicas son:
 
 - **`contact.php`**, que corre en el propio hosting y manda mail por SMTP.
+- **`register.php` / `use.php`**, que gestionan el acceso a la demo (clave por email,
+  cupos y métricas sobre SQLite) — ver [demo-access.md](demo-access.md).
 - **La API de inferencia**, que vive en Azure Container Apps y es un proyecto separado
   (`Checks-icr-fastapi`). El sitio sólo la consume.
 

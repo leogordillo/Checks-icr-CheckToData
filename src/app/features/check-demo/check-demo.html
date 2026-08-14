@@ -65,6 +65,22 @@
       </div>
     </div>
 
+    <div class="demo-foot">
+      <div class="privacy-note">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="4" y="11" width="16" height="10" rx="2"></rect>
+          <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+        </svg>
+        {{ i18n.t().demo_privacy }}
+      </div>
+      @if (access.key()) {
+        <div class="remaining">
+          {{ i18n.t().gate_remaining }}:
+          <span class="num mono">{{ access.unlimited() ? i18n.t().gate_unlimited : (access.remaining() ?? '—') }}</span>
+        </div>
+      }
+    </div>
+
     @if (hasError()) {
       <div class="inline-error">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="1.5">
@@ -81,6 +97,15 @@
     }
   </div>
 </section>
+
+@if (gateOpen()) {
+  <app-access-gate
+    [mode]="gateMode()"
+    [limitReason]="limitReason()"
+    (unlocked)="onGateUnlocked()"
+    (closed)="gateOpen.set(false)"
+  />
+}
 
 <app-results
   [status]="status()"

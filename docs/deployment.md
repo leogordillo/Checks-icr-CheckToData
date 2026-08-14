@@ -29,6 +29,7 @@ Contenido típico de un build:
 | `chunk-XXXXXXXX.js` (chico) | Código compartido |
 | `styles-XXXXXXXX.css` | Estilos |
 | `contact.php` | Endpoint del formulario de contacto |
+| `register.php`, `use.php`, `demo-common.php` | Acceso a la demo: registro, cupos y métricas (ver [demo-access.md](demo-access.md)) |
 | `CheckToData*.png/.jpg`, `favicon.ico` | Logos, favicon e imagen para redes sociales |
 
 Los nombres llevan un hash que **cambia en cada build**. Eso importa: ver

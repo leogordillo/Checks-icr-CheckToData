@@ -1,0 +1,169 @@
+<?php
+/**
+ * Demo-access registration endpoint.
+ *
+ * Receives {name, company, email} and emails back an access key good for
+ * DEMO_DEFAULT_QUOTA runs over DEMO_KEY_DAYS days. The key is NEVER returned in
+ * the HTTP response: having it arrive by email is what proves the address is real.
+ *
+ * Re-registration with a known email does not mint new keys (that would make
+ * quota farming a one-liner): an active key is re-sent with its remaining
+ * balance, and an expired one starts a fresh cycle under the same key.
+ */
+
+declare(strict_types=1);
+
+define('CHECKTODATA_ENDPOINT', true);
+require __DIR__ . '/demo-common.php';
+
+require_post();
+$data = read_json_body();
+
+$name    = field($data, 'name');
+$company = field($data, 'company');
+$email   = strtolower(field($data, 'email'));
+$honey   = field($data, 'website'); // honeypot: real users never see this field
+
+// Silently accept so the bot has no signal to adapt to, but do nothing.
+if ($honey !== '') {
+    respond(200, ['ok' => true]);
+}
+
+// ── Validation (server-side is authoritative; the client copy is UX only) ───────
+
+$errors = [];
+if ($name === '' || mb_strlen($name) > 120) {
+    $errors['name'] = $name === '' ? 'required' : 'too_long';
+}
+if ($company === '' || mb_strlen($company) > 160) {
+    $errors['company'] = $company === '' ? 'required' : 'too_long';
+}
+if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 200) {
+    $errors['email'] = 'invalid';
+}
+foreach ([$name, $company, $email] as $headerBound) {
+    if (preg_match('/[\r\n]/', $headerBound)) {
+        $errors['email'] = 'invalid';
+    }
+}
+if ($errors !== []) {
+    respond(422, ['ok' => false, 'error' => 'validation_failed', 'fields' => $errors]);
+}
+
+if (rate_limit_exceeded('register', client_ip(), 5)) {
+    fail(429, 'rate_limited');
+}
+
+// ── Create or refresh the registration ──────────────────────────────────────────
+
+['config' => $config, 'dir' => $configDir] = load_demo_config();
+$db = demo_db($configDir);
+
+$now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+$nowStr = $now->format('Y-m-d H:i:s');
+$expiresStr = $now->modify('+' . DEMO_KEY_DAYS . ' days')->format('Y-m-d H:i:s');
+
+$db->beginTransaction();
+try {
+    $stmt = $db->prepare('SELECT * FROM users WHERE email = :email');
+    $stmt->execute([':email' => $email]);
+    $user = $stmt->fetch();
+
+    if ($user === false) {
+        // New registration. Retry on the (astronomically unlikely) key collision.
+        $accessKey = '';
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $candidate = generate_access_key();
+            $dupe = $db->prepare('SELECT 1 FROM users WHERE access_key = :k');
+            $dupe->execute([':k' => $candidate]);
+            if ($dupe->fetch() === false) {
+                $accessKey = $candidate;
+                break;
+            }
+        }
+        if ($accessKey === '') {
+            throw new RuntimeException('could not generate a unique key');
+        }
+
+        $insert = $db->prepare(<<<'SQL'
+            INSERT INTO users (name, company, email, access_key, quota_total, quota_used,
+                               created_at, expires_at, ip)
+            VALUES (:name, :company, :email, :key, :quota, 0, :created, :expires, :ip)
+            SQL);
+        $insert->execute([
+            ':name'    => $name,
+            ':company' => $company,
+            ':email'   => $email,
+            ':key'     => $accessKey,
+            ':quota'   => DEMO_DEFAULT_QUOTA,
+            ':created' => $nowStr,
+            ':expires' => $expiresStr,
+            ':ip'      => client_ip(),
+        ]);
+    } else {
+        $accessKey = (string) $user['access_key'];
+        $expired = $user['expires_at'] !== null && (string) $user['expires_at'] < $nowStr;
+
+        if ($expired) {
+            // Expired cycle: same key, fresh window and balance.
+            $reset = $db->prepare(
+                'UPDATE users SET quota_used = 0, expires_at = :expires WHERE id = :id'
+            );
+            $reset->execute([':expires' => $expiresStr, ':id' => $user['id']]);
+        }
+        // Active (or unlimited) key: nothing to change, just re-send it below.
+    }
+
+    $db->commit();
+} catch (Throwable $e) {
+    $db->rollBack();
+    error_log('register.php: ' . $e->getMessage());
+    fail(500, 'server_error');
+}
+
+// ── Send the key ────────────────────────────────────────────────────────────────
+
+$quota = DEMO_DEFAULT_QUOTA;
+$days = DEMO_KEY_DAYS;
+
+$body = <<<TXT
+Hola $name:
+
+Tu clave de acceso a la demo de CheckToData es:
+
+    $accessKey
+
+Habilita $quota ejecuciones durante $days días. Ingresala en checktodata.com
+cuando proceses tu primer cheque.
+
+Recordá: no almacenamos ninguna imagen ni dato de los cheques que proceses.
+Las imágenes viajan cifradas desde tu navegador al motor de inferencia y no
+se guardan en ningún punto.
+
+Para ampliar tu límite o cualquier consulta: info@checktodata.com
+
+— El equipo de CheckToData
+
+----------------------------------------------------------------------
+
+Hi $name:
+
+Your access key for the CheckToData demo is:
+
+    $accessKey
+
+It enables $quota runs over $days days. Enter it at checktodata.com when you
+process your first check.
+
+Remember: we never store check images or any data extracted from them. Images
+travel encrypted from your browser to the inference engine and are not
+persisted at any point.
+
+To extend your limit, or for any question: info@checktodata.com
+
+— The CheckToData team
+TXT;
+
+send_mail($config, $email, $name, 'Tu clave de acceso — CheckToData', $body);
+
+respond(200, ['ok' => true]);
