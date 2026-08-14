@@ -1,0 +1,14 @@
+<div class="wrap">
+  <div class="icon" [style.background]="bg()" [style.color]="fg()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 17c3-3 6-9 8-9s2 6 4 6 3-3 6-3"></path>
+      <path d="M3 21h18"></path>
+    </svg>
+  </div>
+  <div class="kicker">{{ i18n.t().sub_signature }}</div>
+  <div class="value">{{ detected() ? i18n.t().sig_detected : i18n.t().sig_not_detected }}</div>
+  <div class="chip" [style.background]="tone().bg" [style.color]="tone().fg">
+    <span>{{ tone().icon }}</span>
+    <span class="num mono">{{ scorePct() }}</span>
+  </div>
+</div>

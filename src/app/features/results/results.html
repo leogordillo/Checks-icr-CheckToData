@@ -1,0 +1,182 @@
+<section id="results" class="results" [class.visible]="visible()">
+  <div class="panel">
+    @if (isProcessing()) {
+      <div class="progress-track">
+        <div class="progress-bar"></div>
+      </div>
+    }
+    <div class="head">
+      <div>
+        <div class="kicker">{{ i18n.t().results_kicker }}</div>
+        <h2>{{ i18n.t().results_title }}</h2>
+      </div>
+      <div class="head-actions">
+        @for (chip of headerChips(); track chip.label) {
+          <div class="chip">
+            <span class="dot" [style.background]="chip.dot"></span>
+            <span class="chip-label">{{ chip.label }}</span>
+            <span class="chip-value num mono">{{ chip.value }}</span>
+          </div>
+        }
+        @if (hasResults()) {
+          <div class="divider"></div>
+          <button class="btn focus-ring" (click)="onCopy()">
+            {{ copyState() === 'copied' ? i18n.t().copied : i18n.t().copy_json }}
+          </button>
+          <button class="btn focus-ring" (click)="onDownload()">{{ i18n.t().download_json }}</button>
+        }
+      </div>
+    </div>
+
+    @if (hasResults() && coldStartDetected()) {
+      <div class="notice-box">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="1.5">
+          <circle cx="12" cy="12" r="9"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <circle cx="12" cy="15.5" r=".5" fill="#B45309"></circle>
+        </svg>
+        <div class="notice-body">
+          <div class="notice-title">{{ i18n.t().cold_start_title }}</div>
+          <div class="notice-detail">{{ i18n.t().cold_start_body }}</div>
+        </div>
+        <button class="notice-btn" (click)="onRetry()">{{ i18n.t().run_again }}</button>
+      </div>
+    }
+
+    @if (hasError()) {
+      <div class="error-box">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="1.5">
+          <circle cx="12" cy="12" r="9"></circle>
+          <line x1="12" y1="8" x2="12" y2="13"></line>
+          <circle cx="12" cy="16" r=".5" fill="#DC2626"></circle>
+        </svg>
+        <div class="error-body">
+          <div class="error-title">{{ i18n.t().err_title }}</div>
+          <div class="error-detail">{{ errorMsg() }}</div>
+        </div>
+        <button class="retry-btn" (click)="onRetry()">{{ i18n.t().retry }}</button>
+      </div>
+    }
+
+    @if (hasBoth()) {
+      <div class="tabs">
+        <button class="tab focus-ring" [class.active]="activeFace() === 'front'" (click)="setFace('front')">
+          {{ i18n.t().tab_front }}
+        </button>
+        <button class="tab focus-ring" [class.active]="activeFace() === 'back'" (click)="setFace('back')">
+          {{ i18n.t().tab_back }}
+        </button>
+      </div>
+    }
+
+    @if (isProcessing()) {
+      <div class="processing-status">
+        <span class="spinner"></span>
+        <span class="processing-text">{{ i18n.t().processing_status }}</span>
+        <span class="num mono processing-elapsed">{{ elapsedLabel() }}</span>
+      </div>
+      <table class="results-table skeleton">
+        <tbody>
+          @for (k of skeletonCards(); track k) {
+            <tr>
+              <td><div class="sk" style="width:90px;height:11px"></div></td>
+              <td><div class="sk" style="width:70%;height:11px"></div></td>
+              <td><div class="sk" style="width:100%;height:6px"></div></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+
+    @if (showFrontContent()) {
+      <div>
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>{{ i18n.t().col_field }}</th>
+              <th>{{ i18n.t().col_value }}</th>
+              <th class="conf-col">{{ i18n.t().col_conf }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of tableRows(); track row.key) {
+              @if (row.kind === 'field') {
+                <tr [class.low]="row.tone.level === 'low'">
+                  <td class="field-label">{{ row.label }}</td>
+                  <td class="field-value">
+                    <div class="mono">{{ row.value || '—' }}</div>
+                    @if (row.showNormalized) {
+                      <div class="mono normalized">→ {{ row.normalized }}</div>
+                    }
+                  </td>
+                  <td class="conf-col" [title]="row.reasons || ''">
+                    <div class="conf-cell">
+                      <span class="dot" [style.background]="row.tone.bar"></span>
+                      <span class="bar-track">
+                        <span class="bar-fill" [style.width]="scorePctFmt(row.score)" [style.background]="row.tone.bar"></span>
+                      </span>
+                      <span class="num mono conf-pct" [style.color]="row.tone.fg">{{ scorePctFmt(row.score) }}</span>
+                    </div>
+                  </td>
+                </tr>
+              } @else {
+                <!--
+                  Derived control rather than an extracted field: it carries a verdict, so
+                  it shows a badge instead of a confidence bar (there is no percentage to
+                  report here) and is visually set apart from the rows above.
+                -->
+                <tr class="verdict-row" [class.mismatch]="row.status === 'mismatch'">
+                  <td class="field-label">{{ row.label }}</td>
+                  <td class="field-value">
+                    <div class="verdict-values mono">
+                      <span class="verdict-part">
+                        <span class="verdict-tag">CAR</span>{{ row.car }}
+                      </span>
+                      <span class="verdict-sep">·</span>
+                      <span class="verdict-part">
+                        <span class="verdict-tag">LAR</span>{{ row.lar }}
+                      </span>
+                    </div>
+                    <!-- Exactly one explanatory line: the verdict note when there is
+                         something to act on, otherwise what the acronyms mean. -->
+                    @if (row.note) {
+                      <div class="verdict-note">{{ row.note }}</div>
+                    } @else {
+                      <div class="verdict-desc">{{ row.desc }}</div>
+                    }
+                  </td>
+                  <td class="conf-col">
+                    <div class="conf-cell verdict-cell">
+                      <span
+                        class="verdict-badge"
+                        [style.background]="row.colors.bg"
+                        [style.color]="row.colors.fg"
+                      >
+                        <span class="verdict-icon" [style.background]="row.colors.bar"></span>
+                        {{ row.badge }}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+
+        @if (showSignature()) {
+          <app-signature-block [result]="signatureResult()!" />
+        }
+      </div>
+    }
+
+    @if (showBackContent()) {
+      @if (endorseResult(); as er) {
+        <app-endorsement-block [endorse]="er" />
+      }
+    }
+
+    @if (hasResults()) {
+      <app-raw-json-panel [predict]="result()" [endorse]="endorseResult()" />
+    }
+  </div>
+</section>

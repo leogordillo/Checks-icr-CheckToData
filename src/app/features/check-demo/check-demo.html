@@ -1,0 +1,93 @@
+<section class="demo-card">
+  @if (isProcessing()) {
+    <div class="progress-track">
+      <div class="progress-bar"></div>
+    </div>
+  }
+
+  <div class="demo-head">
+    <div>
+      <div class="title">{{ i18n.t().demo_title }}</div>
+      <div class="subtitle">{{ i18n.t().demo_sub }}</div>
+    </div>
+    <div class="status-pill">
+      <span class="dot"></span>
+      <span>{{ i18n.t().api_ok }}</span>
+    </div>
+  </div>
+
+  <div class="demo-body">
+    <div class="slots">
+      <app-upload-dropzone
+        [label]="i18n.t().slot_front"
+        [requiredBadge]="true"
+        [file]="frontFile()"
+        (fileSelected)="onFrontSelected($event)"
+        (fileCleared)="onFrontCleared()"
+      />
+      <app-upload-dropzone
+        [label]="i18n.t().slot_back"
+        [requiredBadge]="false"
+        [hintText]="i18n.t().back_note"
+        [file]="backFile()"
+        (fileSelected)="onBackSelected($event)"
+        (fileCleared)="onBackCleared()"
+      />
+    </div>
+
+    <div class="controls">
+      <div class="controls-left">
+        <button
+          class="process-btn focus-ring"
+          [disabled]="processDisabled()"
+          (click)="processCheck()"
+        >
+          @if (isProcessing()) {
+            <span class="spinner"></span>
+          }
+          {{ i18n.t().process }}
+        </button>
+        <button class="sample-btn focus-ring" (click)="loadSample()">{{ i18n.t().load_sample }}</button>
+      </div>
+      <div class="controls-right">
+        <label class="toggle-label">
+          <span class="toggle" [class.on]="optSig()" (click)="toggleSig()">
+            <span class="toggle-dot"></span>
+          </span>
+          {{ i18n.t().opt_sig }}
+        </label>
+        <label class="toggle-label">
+          <span class="toggle" [class.on]="optEv()" (click)="toggleEv()">
+            <span class="toggle-dot"></span>
+          </span>
+          {{ i18n.t().opt_ev }}
+        </label>
+      </div>
+    </div>
+
+    @if (hasError()) {
+      <div class="inline-error">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="1.5">
+          <circle cx="12" cy="12" r="9"></circle>
+          <line x1="12" y1="8" x2="12" y2="13"></line>
+          <circle cx="12" cy="16" r=".5" fill="#DC2626"></circle>
+        </svg>
+        <div class="inline-error-body">
+          <div class="inline-error-title">{{ i18n.t().err_title }}</div>
+          <div class="inline-error-detail">{{ errorMsg() }}</div>
+        </div>
+        <button class="inline-retry" (click)="processCheck()">{{ i18n.t().retry }}</button>
+      </div>
+    }
+  </div>
+</section>
+
+<app-results
+  [status]="status()"
+  [result]="result()"
+  [endorseResult]="endorseResult()"
+  [errorMsg]="errorMsg()"
+  [showSignatureToggleOn]="optSig()"
+  [coldStartDetected]="coldStartDetected()"
+  (retry)="processCheck()"
+/>

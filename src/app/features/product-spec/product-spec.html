@@ -1,0 +1,12 @@
+<section id="producto" class="section">
+  <div class="kicker">{{ i18n.t().spec_kicker }}</div>
+  <h2>{{ i18n.t().spec_title }}</h2>
+  <div class="table">
+    @for (sp of specs(); track sp.k) {
+      <div class="row">
+        <div class="k">{{ sp.k }}</div>
+        <div class="v mono">{{ sp.v }}</div>
+      </div>
+    }
+  </div>
+</section>

@@ -1,0 +1,28 @@
+<header class="bar">
+  <div class="inner">
+    <div class="brand">
+      <img class="logo" src="/CheckToData-land.sm.png" alt="CheckToData" />
+    </div>
+    <nav class="nav">
+      <a href="#producto">{{ i18n.t().nav_product }}</a>
+      <a href="#how">{{ i18n.t().nav_how }}</a>
+      <a href="#contact">{{ i18n.t().nav_contact }}</a>
+    </nav>
+    <div class="lang-switch">
+      <button
+        class="focus-ring"
+        [class.active]="i18n.lang() === 'es'"
+        (click)="setLang('es')"
+      >
+        ES
+      </button>
+      <button
+        class="focus-ring"
+        [class.active]="i18n.lang() === 'en'"
+        (click)="setLang('en')"
+      >
+        EN
+      </button>
+    </div>
+  </div>
+</header>

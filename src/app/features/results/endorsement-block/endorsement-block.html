@@ -1,0 +1,34 @@
+<div class="verdict" [style.background]="verdict().bg">
+  <div class="left">
+    <div class="icon" [style.color]="verdict().color">
+      @if (isValid()) {
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      } @else {
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"></circle>
+          <line x1="12" y1="8" x2="12" y2="13"></line>
+          <circle cx="12" cy="16" r=".6" fill="currentColor"></circle>
+        </svg>
+      }
+    </div>
+    <div class="labels">
+      <div class="kicker">{{ i18n.t().verdict_kicker }}</div>
+      <div class="value">{{ verdict().label }}</div>
+    </div>
+  </div>
+  <div class="chip" [style.background]="tone().bg" [style.color]="tone().fg">
+    <span>{{ tone().icon }}</span>
+    <span class="num mono">{{ scorePct() }}</span>
+  </div>
+</div>
+
+<div class="cotejo">
+  <div class="cotejo-head">
+    <div class="dot"></div>
+    <div class="kicker">{{ i18n.t().cotejo_kicker }}</div>
+    <div class="status-chip">{{ i18n.t().cotejo_unknown }}</div>
+  </div>
+  <div class="cotejo-note">{{ i18n.t().cotejo_note }}</div>
+</div>

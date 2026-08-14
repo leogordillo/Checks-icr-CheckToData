@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:'Inter',system-ui,-apple-system,sans-serif;color:#09090B;background:#FCFCFD;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:#6D42D9;text-decoration:none}
+  a:hover{text-decoration:underline}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;padding:0;color:inherit}
+  input,textarea,select{font-family:inherit;font-size:14px;color:#09090B}
+  .num{font-variant-numeric:tabular-nums}
+  .mono{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace}
+  ::selection{background:#6D42D933}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes indet{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
+  @keyframes shimmer{0%{background-position:-200px 0}100%{background-position:200px 0}}
+  .sk{background:linear-gradient(90deg,#F4F4F5 0%,#EAEAEC 50%,#F4F4F5 100%);background-size:400px 100%;animation:shimmer 1.4s linear infinite;border-radius:4px}
+  .focus-ring:focus-visible{outline:2px solid #6D42D9;outline-offset:2px;border-radius:6px}
+  input:focus,textarea:focus{outline:2px solid #6D42D9;outline-offset:0}
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#FCFCFD">
+
+<header style="position:sticky;top:0;z-index:40;height:60px;background:#FFFFFF;border-bottom:1px solid #E4E4E7">
+  <div style="max-width:1200px;height:100%;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:24px">
+    <div style="display:flex;align-items:center;gap:8px">
+      <div style="width:22px;height:22px;border-radius:5px;background:#09090B;position:relative;display:flex;align-items:center;justify-content:center">
+        <div style="width:10px;height:2px;background:#0E9C9C;position:absolute;top:9px;left:6px"></div>
+        <div style="width:6px;height:2px;background:#6D42D9;position:absolute;top:13px;left:6px"></div>
+      </div>
+      <span style="font-weight:600;font-size:15px;letter-spacing:-0.01em">CheckICR</span>
+    </div>
+    <nav style="display:flex;align-items:center;gap:28px">
+      <a href="#producto" style="color:#52525B;font-size:13.5px;font-weight:500">{{ t.nav_product }}</a>
+      <a href="#how" style="color:#52525B;font-size:13.5px;font-weight:500">{{ t.nav_how }}</a>
+      <a href="#contact" style="color:#52525B;font-size:13.5px;font-weight:500">{{ t.nav_contact }}</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="display:inline-flex;padding:2px;background:#FFFFFF;border:1px solid #E4E4E7;border-radius:6px">
+        <button onClick="{{ setLangEs }}" style="{{ langBtnEs }}" class="focus-ring">ES</button>
+        <button onClick="{{ setLangEn }}" style="{{ langBtnEn }}" class="focus-ring">EN</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main style="max-width:1200px;margin:0 auto;padding:40px 24px 80px">
+
+  <section style="display:grid;grid-template-columns:1.5fr 1fr;gap:48px;align-items:start;margin-bottom:40px">
+    <div>
+      <div style="display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border:1px solid #E4E4E7;border-radius:999px;font-size:11.5px;color:#52525B;font-weight:500;margin-bottom:16px">
+        <span style="width:6px;height:6px;background:#0E9C9C;border-radius:50%"></span>
+        {{ t.hero_pill }}
+      </div>
+      <h1 style="font-size:36px;font-weight:600;line-height:1.15;letter-spacing:-0.02em;margin:0 0 12px;max-width:640px">{{ t.hero_title }}</h1>
+      <p style="font-size:15px;line-height:1.55;color:#52525B;margin:0 0 12px;max-width:560px">{{ t.hero_sub }}</p>
+      <div class="mono" style="font-size:12px;color:#A1A1AA">LayoutLMv3 · ONNX Runtime · ~1.2s / cheque</div>
+    </div>
+    <div style="border:1px solid #E4E4E7;border-radius:8px;background:linear-gradient(180deg,#F7F4FD 0%,#F4FAFA 100%);padding:20px;box-shadow:0 1px 2px rgba(16,24,40,.04)">
+      <div style="font-size:11.5px;font-weight:500;color:#A1A1AA;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px">{{ t.metrics_title }}</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+        <div style="border-left:2px solid #6D42D9;padding-left:10px"><div class="num" style="font-size:26px;font-weight:600;letter-spacing:-0.02em">12</div><div style="font-size:12px;color:#52525B;margin-top:2px">{{ t.metric_fields }}</div></div>
+        <div style="border-left:2px solid #5B7ED0;padding-left:10px"><div class="num" style="font-size:26px;font-weight:600;letter-spacing:-0.02em">98.4<span style="font-size:16px;color:#A1A1AA">%</span></div><div style="font-size:12px;color:#52525B;margin-top:2px">{{ t.metric_acc }}</div></div>
+        <div style="border-left:2px solid #0E9C9C;padding-left:10px"><div class="num" style="font-size:26px;font-weight:600;letter-spacing:-0.02em">1.18<span style="font-size:16px;color:#A1A1AA">s</span></div><div style="font-size:12px;color:#52525B;margin-top:2px">{{ t.metric_lat }}</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section style="border:1px solid #E4E4E7;border-radius:8px;background:#FFFFFF;box-shadow:0 1px 2px rgba(16,24,40,.05);position:relative;overflow:hidden">
+
+    <sc-if value="{{ isProcessing }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:#F4F4F5;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;bottom:0;width:40%;background:linear-gradient(90deg,#6D42D9,#0E9C9C);animation:indet 1.2s ease-in-out infinite"></div>
+      </div>
+    </sc-if>
+
+    <div style="padding:20px 24px;border-bottom:1px solid #E4E4E7;display:flex;align-items:center;justify-content:space-between;gap:16px">
+      <div>
+        <div style="font-size:15px;font-weight:600;letter-spacing:-0.01em">{{ t.demo_title }}</div>
+        <div style="font-size:12.5px;color:#52525B;margin-top:2px">{{ t.demo_sub }}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid #E4E4E7;border-radius:999px;font-size:11.5px;color:#52525B">
+          <span style="width:6px;height:6px;background:#0E9C9C;border-radius:50%"></span>
+          <span>{{ t.api_ok }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:24px">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+        <div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px">
+            <div style="font-size:12.5px;font-weight:600;color:#09090B">{{ t.slot_front }}</div>
+            <div style="font-size:11px;color:#DC2626;font-weight:500">{{ t.required }}</div>
+          </div>
+          <sc-if value="{{ frontHasFile }}" hint-placeholder-val="{{ false }}"><div>{{ previewFront }}</div></sc-if>
+          <sc-if value="{{ frontNoFile }}" hint-placeholder-val="{{ true }}">
+            <div
+              onDragOver="{{ dragOverFront }}"
+              onDragLeave="{{ dragLeaveFront }}"
+              onDrop="{{ dropFront }}"
+              onClick="{{ pickFront }}"
+              onKeyDown="{{ keyPickFront }}"
+              tabIndex="0"
+              role="button"
+              class="focus-ring"
+              style="{{ dzFrontStyle }}">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <div style="font-size:13px;color:#09090B;font-weight:500">{{ t.dz_primary }}</div>
+              <div style="font-size:11.5px;color:#A1A1AA">JPG, PNG · {{ t.max_size }}</div>
+            </div>
+          </sc-if>
+        </div>
+        <div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px">
+            <div style="font-size:12.5px;font-weight:600;color:#09090B">{{ t.slot_back }}</div>
+            <div style="font-size:11px;color:#A1A1AA">{{ t.optional }}</div>
+          </div>
+          <sc-if value="{{ backHasFile }}" hint-placeholder-val="{{ false }}"><div>{{ previewBack }}</div></sc-if>
+          <sc-if value="{{ backNoFile }}" hint-placeholder-val="{{ true }}">
+            <div
+              onDragOver="{{ dragOverBack }}"
+              onDragLeave="{{ dragLeaveBack }}"
+              onDrop="{{ dropBack }}"
+              onClick="{{ pickBack }}"
+              onKeyDown="{{ keyPickBack }}"
+              tabIndex="0"
+              role="button"
+              class="focus-ring"
+              style="{{ dzBackStyle }}">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <div style="font-size:13px;color:#09090B;font-weight:500">{{ t.dz_primary }}</div>
+              <div style="font-size:11.5px;color:#A1A1AA">{{ t.back_note }}</div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <input type="file" ref="{{ frontInputRef }}" onChange="{{ onFrontInput }}" accept="image/jpeg,image/png" style="display:none">
+      <input type="file" ref="{{ backInputRef }}" onChange="{{ onBackInput }}" accept="image/jpeg,image/png" style="display:none">
+
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-top:8px;border-top:1px solid #F4F4F5">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <button onClick="{{ processCheck }}" disabled="{{ processDisabled }}" style="{{ processBtnStyle }}" class="focus-ring">
+            <sc-if value="{{ isProcessing }}" hint-placeholder-val="{{ false }}"><span style="display:inline-block;width:12px;height:12px;border:2px solid #FFFFFF66;border-top-color:#FFFFFF;border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:-2px"></span></sc-if>
+            {{ t.process }}
+          </button>
+          <button onClick="{{ loadSample }}" style="background:none;color:#6D42D9;font-size:13px;font-weight:500;padding:8px 4px" class="focus-ring">{{ t.load_sample }}</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:18px">
+          <label style="display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:#52525B;cursor:pointer">
+            <span onClick="{{ toggleSig }}" style="{{ toggleSigStyle }}"><span style="{{ toggleSigDot }}"></span></span>
+            {{ t.opt_sig }}
+          </label>
+          <label style="display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:#52525B;cursor:pointer">
+            <span onClick="{{ toggleEv }}" style="{{ toggleEvStyle }}"><span style="{{ toggleEvDot }}"></span></span>
+            {{ t.opt_ev }}
+          </label>
+        </div>
+      </div>
+
+      <sc-if value="{{ hasError }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:16px;border:1px solid #DC262633;background:#DC26260A;border-radius:6px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="1.5" style="flex:none;margin-top:2px"><circle cx="12" cy="12" r="9"></circle><line x1="12" y1="8" x2="12" y2="13"></line><circle cx="12" cy="16" r=".5" fill="#DC2626"></circle></svg>
+          <div style="flex:1;font-size:12.5px;color:#09090B">
+            <div style="font-weight:600;margin-bottom:2px">{{ t.err_title }}</div>
+            <div style="color:#52525B">{{ errorMsg }}</div>
+          </div>
+          <button onClick="{{ processCheck }}" style="font-size:12px;font-weight:500;color:#DC2626;padding:4px 10px;border:1px solid #DC262633;border-radius:5px">{{ t.retry }}</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isProcessing }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:20px;border-top:1px solid #F4F4F5;padding-top:20px">
+          <div style="font-size:12px;font-weight:600;color:#A1A1AA;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px">{{ t.pipeline }}</div>
+          <div style="display:flex;flex-direction:column;gap:8px" aria-live="polite">
+            <sc-for list="{{ steps }}" as="step" hint-placeholder-count="5">
+              <div style="display:flex;align-items:center;gap:12px;font-size:13px">
+                <div style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex:none">{{ step.icon }}</div>
+                <div style="flex:1;color:{{ step.color }}">{{ step.label }}</div>
+                <div class="mono num" style="font-size:12px;color:#A1A1AA;min-width:60px;text-align:right">{{ step.timeLabel }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+    </div>
+  </section>
+
+  <sc-if value="{{ resultsVisible }}" hint-placeholder-val="{{ false }}">
+    <section id="results" style="{{ resultsSectionStyle }}">
+      <div style="border:1px solid #E4E4E7;border-radius:8px;background:#FFFFFF;padding:16px 18px;box-shadow:0 1px 2px rgba(16,24,40,.04)">
+
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+          <div>
+            <div style="font-size:10.5px;font-weight:600;color:#A1A1AA;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">{{ t.results_kicker }}</div>
+            <h2 style="font-size:17px;font-weight:600;letter-spacing:-0.01em;margin:0">{{ t.results_title }}</h2>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <sc-for list="{{ headerChips }}" as="chip" hint-placeholder-count="4">
+              <div style="{{ chip.style }}">
+                <span style="{{ chip.dotStyle }}"></span>
+                <span style="color:#52525B">{{ chip.label }}</span>
+                <span style="font-weight:600;color:#09090B" class="num mono">{{ chip.value }}</span>
+              </div>
+            </sc-for>
+            <div style="width:1px;height:20px;background:#E4E4E7;margin:0 2px"></div>
+            <button onClick="{{ copyJson }}" style="font-size:12px;font-weight:500;color:#09090B;padding:6px 10px;border:1px solid #E4E4E7;border-radius:5px;background:#FFFFFF" class="focus-ring">{{ copyLabel }}</button>
+            <button onClick="{{ downloadJson }}" style="font-size:12px;font-weight:500;color:#09090B;padding:6px 10px;border:1px solid #E4E4E7;border-radius:5px;background:#FFFFFF" class="focus-ring">{{ t.download_json }}</button>
+          </div>
+        </div>
+
+        <sc-if value="{{ hasError }}" hint-placeholder-val="{{ false }}">
+          <div style="border:1px solid #DC262633;background:#DC26260A;border-radius:6px;padding:16px 18px;display:flex;align-items:flex-start;gap:12px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="1.5" style="flex:none;margin-top:2px"><circle cx="12" cy="12" r="9"></circle><line x1="12" y1="8" x2="12" y2="13"></line><circle cx="12" cy="16" r=".5" fill="#DC2626"></circle></svg>
+            <div style="flex:1;font-size:13px">
+              <div style="font-weight:600;margin-bottom:2px">{{ t.err_title }}</div>
+              <div style="color:#52525B">{{ errorMsg }}</div>
+            </div>
+            <button onClick="{{ processCheck }}" style="font-size:12px;font-weight:500;color:#DC2626;padding:6px 12px;border:1px solid #DC262633;border-radius:5px">{{ t.retry }}</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ hasBoth }}" hint-placeholder-val="{{ false }}">
+          <div style="display:inline-flex;padding:2px;background:#FCFCFD;border:1px solid #E4E4E7;border-radius:6px;margin-bottom:18px">
+            <button onClick="{{ setFaceFront }}" style="{{ tabFrontStyle }}" class="focus-ring">{{ t.tab_front }}</button>
+            <button onClick="{{ setFaceBack }}" style="{{ tabBackStyle }}" class="focus-ring">{{ t.tab_back }}</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isProcessing }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+            <sc-for list="{{ skeletonCards }}" as="k" hint-placeholder-count="12">
+              <div style="border:1px solid #E4E4E7;border-radius:6px;padding:10px 12px;background:#FFFFFF">
+                <div class="sk" style="width:100px;height:10px;margin-bottom:8px"></div>
+                <div class="sk" style="width:100%;height:12px;margin-bottom:8px"></div>
+                <div class="sk" style="width:100%;height:2px"></div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showFrontContent }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+              <sc-for list="{{ frontFieldCards }}" as="c" hint-placeholder-count="9">
+                <div onMouseEnter="{{ c.onEnter }}" onMouseLeave="{{ c.onLeave }}" style="{{ c.style }}">
+                  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:4px">
+                    <div style="font-size:12px;font-weight:600;color:#09090B;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.label }}</div>
+                    <div style="{{ c.chipStyle }}">
+                      <span>{{ c.chipIcon }}</span>
+                      <span class="num mono">{{ c.scorePct }}</span>
+                    </div>
+                  </div>
+                  <div class="mono" style="font-size:13px;color:#09090B;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.value }}</div>
+                  <sc-if value="{{ c.showNormalized }}" hint-placeholder-val="{{ false }}"><div class="mono" style="font-size:11.5px;color:#52525B;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.normalized }}</div></sc-if>
+                  <div style="height:2px;background:#F4F4F5;border-radius:2px;overflow:hidden;margin-top:8px">
+                    <div style="width:{{ c.scoreBar }};height:100%;background:{{ c.barColor }}"></div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="margin-top:12px;border:1px solid #E4E4E7;border-radius:6px;padding:10px 12px;background:#FCFCFD">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                <div style="font-size:11px;font-weight:600;color:#A1A1AA;text-transform:uppercase;letter-spacing:0.06em">{{ t.sub_micr }}</div>
+                <div class="mono" style="flex:1;font-size:12.5px;color:#09090B;padding:5px 8px;background:#FFFFFF;border:1px solid #E4E4E7;border-radius:4px;overflow-x:auto;white-space:nowrap">{{ micrFull }}</div>
+                <div style="{{ micrChipStyle }}">
+                  <span>{{ micrChipIcon }}</span>
+                  <span class="num mono">{{ micrScorePct }}</span>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+                <sc-for list="{{ micrParts }}" as="m" hint-placeholder-count="3">
+                  <div style="padding:8px 10px;border:1px solid #E4E4E7;border-radius:5px;background:#FFFFFF">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:2px">
+                      <div style="font-size:10.5px;color:#A1A1AA;text-transform:uppercase;letter-spacing:0.06em">{{ m.label }}</div>
+                      <div class="num mono" style="font-size:10.5px;color:{{ m.color }}">{{ m.scorePct }}</div>
+                    </div>
+                    <div class="mono" style="font-size:12.5px;color:#09090B">{{ m.value }}</div>
+                    <div style="height:2px;background:#F4F4F5;border-radius:2px;overflow:hidden;margin-top:6px">
+                      <div style="width:{{ m.scoreBar }};height:100%;background:{{ m.barColor }}"></div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <sc-if value="{{ showSignature }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:10px;border:1px solid #E4E4E7;border-radius:6px;padding:8px 12px;background:#FCFCFD;display:flex;align-items:center;gap:10px">
+                <div style="width:24px;height:24px;border-radius:5px;background:{{ sigBg }};display:flex;align-items:center;justify-content:center;flex:none;color:{{ sigColor }}">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c3-3 6-9 8-9s2 6 4 6 3-3 6-3"></path><path d="M3 21h18"></path></svg>
+                </div>
+                <div style="font-size:11px;font-weight:600;color:#A1A1AA;text-transform:uppercase;letter-spacing:0.06em">{{ t.sub_signature }}</div>
+                <div style="font-size:13px;font-weight:600;color:#09090B;flex:1">{{ sigLabel }}</div>
+                <div style="{{ sigChipStyle }}">
+                  <span>{{ sigChipIcon }}</span>
+                  <span class="num mono">{{ sigScorePct }}</span>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showBackContent }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="{{ verdictBoxStyle }}">
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="width:26px;height:26px;border-radius:6px;background:{{ verdictBg }};display:flex;align-items:center;justify-content:center;color:{{ verdictColor }};flex:none">{{ verdictIconEl }}</div>
+                <div style="display:flex;align-items:baseline;gap:8px">
+                  <div style="font-size:10.5px;font-weight:600;color:#A1A1AA;text-transform:uppercase;letter-spacing:0.06em">{{ t.verdict_kicker }}</div>
+                  <div style="font-size:14px;font-weight:600;color:#09090B">{{ verdictLabel }}</div>
+                </div>
+              </div>
+              <div style="{{ verdictChipStyle }}">
+                <span>{{ verdictChipIcon }}</span>
+                <span class="num mono">{{ verdictScorePct }}</span>
+              </div>
+            </div>
+
+            <div style="{{ cotejoBoxStyle }}">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                <div style="width:6px;height:6px;border-radius:50%;background:{{ cotejoColor }}"></div>
+                <div style="font-size:10.5px;font-weight:600;color:#A1A1AA;text-transform:uppercase;letter-spacing:0.08em">{{ t.cotejo_kicker }}</div>
+                <div style="{{ cotejoChipStyle }}">{{ cotejoStatusLabel }}</div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center">
+                <div style="padding:6px 10px;border:1px solid #E4E4E7;border-radius:5px;background:#FFFFFF">
+                  <div style="font-size:10.5px;color:#A1A1AA;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px">{{ t.cotejo_front }}</div>
+                  <div class="mono" style="font-size:12.5px;color:#09090B">{{ cotejoFrontVal }}</div>
+                </div>
+                <div style="color:#A1A1AA;font-size:14px">↔</div>
+                <div style="padding:6px 10px;border:1px solid #E4E4E7;border-radius:5px;background:#FFFFFF">
+                  <div style="font-size:10.5px;color:#A1A1AA;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px">{{ t.cotejo_back }}</div>
+                  <div class="mono" style="font-size:12.5px;color:#09090B">{{ cotejoBackVal }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px">
+              <sc-for list="{{ backFieldCards }}" as="c" hint-placeholder-count="7">
+                <div style="{{ c.style }}">
+                  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:4px">
+                    <div style="font-size:12px;font-weight:600;color:#09090B;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.label }}</div>
+                    <div style="{{ c.chipStyle }}">
+                      <span>{{ c.chipIcon }}</span>
+                      <span class="num mono">{{ c.scorePct }}</span>
+                    </div>
+                  </div>
+                  <div class="mono" style="font-size:13px;color:#09090B;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.value }}</div>
+                  <div style="height:2px;background:#F4F4F5;border-radius:2px;overflow:hidden;margin-top:8px">
+                    <div style="width:{{ c.scoreBar }};height:100%;background:{{ c.barColor }}"></div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ hasResults }}" hint-placeholder-val="{{ false }}">
+          <details style="margin-top:20px;border-top:1px solid #F4F4F5;padding-top:16px">
+            <summary style="cursor:pointer;font-size:12.5px;color:#52525B;font-weight:500;user-select:none">{{ t.raw_json }}</summary>
+            <pre class="mono" style="margin:10px 0 0;padding:12px;background:#09090B;color:#E4E4E7;border-radius:6px;font-size:11.5px;line-height:1.5;max-height:320px;overflow:auto">{{ rawJson }}</pre>
+          </details>
+        </sc-if>
+
+      </div>
+    </section>
+  </sc-if>
+
+  <section id="how" style="margin-top:64px">
+    <div style="font-size:11.5px;font-weight:600;color:#A1A1AA;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">{{ t.how_kicker }}</div>
+    <h2 style="font-size:22px;font-weight:600;letter-spacing:-0.01em;margin:0 0 24px">{{ t.how_title }}</h2>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px">
+      <sc-for list="{{ howSteps }}" as="s" hint-placeholder-count="4">
+        <div style="border:1px solid #E4E4E7;border-radius:8px;padding:18px 18px 20px;background:{{ s.cardBg }}">
+          <div class="mono num" style="font-size:11.5px;color:{{ s.accent }};font-weight:600;margin-bottom:10px">{{ s.n }}</div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px">{{ s.title }}</div>
+          <div style="font-size:12.5px;color:#52525B;line-height:1.55">{{ s.desc }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section id="producto" style="margin-top:64px">
+    <div style="font-size:11.5px;font-weight:600;color:#A1A1AA;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">{{ t.spec_kicker }}</div>
+    <h2 style="font-size:22px;font-weight:600;letter-spacing:-0.01em;margin:0 0 20px">{{ t.spec_title }}</h2>
+    <div style="border:1px solid #E4E4E7;border-radius:8px;background:linear-gradient(180deg,#F4FAFA 0%,#F7F4FD 100%);overflow:hidden">
+      <sc-for list="{{ specs }}" as="sp" hint-placeholder-count="7">
+        <div style="display:grid;grid-template-columns:220px 1fr;padding:12px 20px;border-top:1px solid #F4F4F5;font-size:13px">
+          <div style="color:#52525B;font-weight:500">{{ sp.k }}</div>
+          <div class="mono" style="color:#09090B">{{ sp.v }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section id="contact" style="margin-top:64px">
+    <div style="font-size:11.5px;font-weight:600;color:#A1A1AA;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">{{ t.contact_kicker }}</div>
+    <h2 style="font-size:22px;font-weight:600;letter-spacing:-0.01em;margin:0 0 24px">{{ t.contact_title }}</h2>
+    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:48px;align-items:start">
+      <form onSubmit="{{ submitContact }}" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div style="grid-column:1 / 2">
+          <label style="display:block;font-size:12px;font-weight:500;color:#52525B;margin-bottom:6px">{{ t.f_name }}</label>
+          <input value="{{ contact.name }}" onChange="{{ setContactName }}" style="width:100%;padding:8px 10px;border:1px solid #E4E4E7;border-radius:6px;background:#FFFFFF">
+        </div>
+        <div style="grid-column:2 / 3">
+          <label style="display:block;font-size:12px;font-weight:500;color:#52525B;margin-bottom:6px">{{ t.f_email }}</label>
+          <input value="{{ contact.email }}" onChange="{{ setContactEmail }}" style="{{ emailInputStyle }}">
+          <sc-if value="{{ emailError }}" hint-placeholder-val="{{ false }}"><div style="font-size:11.5px;color:#DC2626;margin-top:4px">{{ t.err_email }}</div></sc-if>
+        </div>
+        <div style="grid-column:1 / 3">
+          <label style="display:block;font-size:12px;font-weight:500;color:#52525B;margin-bottom:6px">{{ t.f_company }}</label>
+          <input value="{{ contact.company }}" onChange="{{ setContactCompany }}" style="width:100%;padding:8px 10px;border:1px solid #E4E4E7;border-radius:6px;background:#FFFFFF">
+        </div>
+        <div style="grid-column:1 / 3">
+          <label style="display:block;font-size:12px;font-weight:500;color:#52525B;margin-bottom:6px">{{ t.f_message }}</label>
+          <textarea value="{{ contact.message }}" onChange="{{ setContactMessage }}" rows="4" style="width:100%;padding:8px 10px;border:1px solid #E4E4E7;border-radius:6px;background:#FFFFFF;resize:vertical;font-family:inherit"></textarea>
+        </div>
+        <div style="grid-column:1 / 3">
+          <button type="submit" style="padding:9px 16px;background:#6D42D9;color:#FFFFFF;font-size:13px;font-weight:500;border-radius:6px" class="focus-ring">{{ t.f_submit }}</button>
+        </div>
+      </form>
+      <div style="border-left:1px solid #E4E4E7;padding-left:32px">
+        <div style="font-size:12px;font-weight:600;color:#A1A1AA;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px">{{ t.contact_direct }}</div>
+        <div class="mono" style="font-size:13px;margin-bottom:4px">sales@checkicr.io</div>
+        <div class="mono" style="font-size:13px;color:#52525B;margin-bottom:16px">+54 11 4000 0000</div>
+        <div style="font-size:12.5px;color:#52525B;line-height:1.55">{{ t.contact_note }}</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer style="border-top:1px solid #E4E4E7;background:#FFFFFF;height:56px;display:flex;align-items:center">
+  <div style="max-width:1200px;margin:0 auto;width:100%;padding:0 24px;display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:14px;font-size:12px;color:#52525B">
+      <span style="font-weight:600;color:#09090B">CheckICR</span>
+      <span>© 2026</span>
+      <a href="#" style="color:#52525B">{{ t.privacy }}</a>
+      <a href="#" style="color:#52525B">{{ t.terms }}</a>
+    </div>
+    <div style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:#52525B">
+      <span style="width:6px;height:6px;background:#0E9C9C;border-radius:50%"></span>
+      {{ t.api_ok }}
+    </div>
+  </div>
+</footer>
+
+{{ zoomModal }}
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    lang: 'es',
+    frontFile: null, backFile: null,
+    frontUrl: null, backUrl: null,
+    frontName: '', backName: '',
+    frontSize: 0, backSize: 0,
+    frontDim: null, backDim: null,
+    dragFront: false, dragBack: false,
+    optSig: true, optEv: false,
+    status: 'idle', // idle | processing | results | error
+    steps: [],
+    result: null, endorseResult: null,
+    hoverField: null,
+    magFront: null, magBack: null,
+    zoom: null, // {side, scale, tx, ty}
+    error: null,
+    contact: { name:'', email:'', company:'', message:'' },
+    emailErr: false,
+    copyState: 0,
+    activeFace: 'front',
+  };
+  _prevStatus = 'idle';
+
+  componentDidMount(){
+    try{ const s = localStorage.getItem('checkicr_lang'); if(s==='en'||s==='es') this.setState({lang:s}); }catch(e){}
+  }
+  componentDidUpdate(){
+    const s = this.state.status;
+    if(this._prevStatus !== s && (s==='processing' || s==='results')){
+      const el = document.getElementById('results');
+      if(el){
+        const y = el.getBoundingClientRect().top + window.pageYOffset - 72;
+        try{ window.scrollTo({top:y, behavior:'smooth'}); }catch(e){ window.scrollTo(0,y); }
+      }
+    }
+    this._prevStatus = s;
+  }
+
+  T = {
+    es: {
+      nav_product:'Producto', nav_how:'Cómo funciona', nav_contact:'Contacto',
+      hero_pill:'Motor ICR para cheques bancarios',
+      hero_title:'Extracción de datos de cheques con confianza medible',
+      hero_sub:'Motor ICR entrenado sobre LayoutLMv3 que devuelve campos normalizados, línea MICR desglosada y clasificación de firma con score de confianza por campo.',
+      metrics_title:'Rendimiento en producción',
+      metric_fields:'Campos extraídos', metric_acc:'Precisión promedio', metric_lat:'Latencia media',
+      demo_title:'Probá el motor con tu propio cheque', demo_sub:'La respuesta que ves acá es la misma que consume tu integración.',
+      api_ok:'API operativa',
+      slot_front:'Frente del cheque', slot_back:'Dorso del cheque',
+      required:'Requerido', optional:'Opcional',
+      dz_primary:'Arrastrá una imagen o buscá en tu equipo', max_size:'máx. 10 MB',
+      back_note:'Requerido solo para verificar endoso',
+      process:'Procesar cheque', load_sample:'Usar cheque de ejemplo',
+      opt_sig:'Detección de firma', opt_ev:'Incluir evidencia',
+      pipeline:'Pipeline',
+      step_norm:'Normalización de imagen', step_ocr:'OCR', step_map:'Mapeo de tokens', step_inf:'Inferencia ICR', step_sig:'Clasificación de firma',
+      st_pending:'Pendiente', st_running:'En curso', st_done:'Listo',
+      confidence:'Confianza',
+      signed:'FIRMADO', unsigned:'NO FIRMADO',
+      endorsed:'ENDOSADO', unendorsed:'NO ENDOSADO',
+      no_back:'Endoso — subí el dorso del cheque para verificar',
+      total_time:'Tiempo total',
+      extracted:'Campos extraídos',
+      col_field:'Campo', col_value:'Valor extraído', col_normalized:'Valor normalizado', col_conf:'Confianza',
+      copy_json:'Copiar JSON', copied:'Copiado', download_json:'Descargar .json',
+      raw_json:'Ver respuesta cruda de la API',
+      how_kicker:'Cómo funciona', how_title:'Del cheque al JSON en cuatro pasos',
+      how_1t:'Ingesta', how_1d:'Subí una imagen JPG o PNG del cheque. Sin preprocesamiento manual.',
+      how_2t:'Normalización + OCR', how_2d:'Se corrige perspectiva y ruido, se ejecuta OCR y se tokeniza el documento.',
+      how_3t:'Inferencia ICR', how_3d:'LayoutLMv3 identifica y clasifica cada campo con score por token.',
+      how_4t:'Salida estructurada', how_4d:'JSON con valores crudos, normalizados y MICR desglosado.',
+      spec_kicker:'Producto', spec_title:'Ficha técnica',
+      spec_fields:'Campos soportados', spec_fields_v:'12 (payee, maker, amount, amount_words, date, bank, check_number, MICR line, MICR routing/account/check, maker_address)',
+      spec_formats:'Formatos aceptados', spec_formats_v:'JPG, PNG · hasta 10 MB',
+      spec_lat:'Latencia típica', spec_lat_v:'1.1 – 1.4 s por cheque (p95)',
+      spec_deploy:'Modo de despliegue', spec_deploy_v:'Cloud gestionada o on-premise (Docker / Kubernetes)',
+      spec_base:'Modelo base', spec_base_v:'LayoutLMv3 fine-tuned · ONNX Runtime',
+      spec_api:'Protocolo', spec_api_v:'REST, multipart/form-data, respuesta JSON',
+      spec_sec:'Seguridad', spec_sec_v:'TLS 1.3, sin persistencia de imágenes, aislamiento por tenant',
+      contact_kicker:'Contacto', contact_title:'Hablemos de tu integración',
+      f_name:'Nombre', f_email:'Email corporativo', f_company:'Empresa', f_message:'Mensaje', f_submit:'Enviar',
+      err_email:'Ingresá un email corporativo válido',
+      contact_direct:'Directo', contact_note:'Respondemos en menos de un día hábil. Podemos coordinar una prueba con tus propias imágenes bajo NDA.',
+      privacy:'Privacidad', terms:'Términos',
+      err_title:'No pudimos procesar el cheque',
+      retry:'Reintentar',
+      f_amount:'Monto', f_amount_words:'Monto en letras', f_date:'Fecha', f_payee:'Beneficiario', f_maker:'Librador', f_maker_addr:'Domicilio del librador', f_bank:'Banco', f_check_number:'Número de cheque', f_micr_line:'Línea MICR', f_micr_routing:'MICR · Routing', f_micr_account:'MICR · Cuenta', f_micr_check:'MICR · Nro. de cheque',
+      results_kicker:'Resultado de la extracción', results_title:'Datos extraídos',
+      chip_confidence:'Confianza', chip_latency:'Latencia', chip_fields:'Campos', chip_scope:'Alcance',
+      scope_front:'Frente', scope_both:'Frente + dorso',
+      tab_front:'Frente', tab_back:'Dorso',
+      sub_micr:'Línea MICR', sub_signature:'Firma',
+      sub_micr_routing:'Routing', sub_micr_account:'Cuenta', sub_micr_check:'Nro. cheque',
+      verdict_kicker:'Verificación de endoso',
+      verdict_valid:'Endoso válido', verdict_absent:'Endoso ausente', verdict_illegible:'Endoso ilegible',
+      cotejo_kicker:'Cotejo frente ↔ dorso',
+      cotejo_front:'Beneficiario (frente)', cotejo_back:'Endosatario (dorso)',
+      cotejo_match:'Coincide', cotejo_nomatch:'No coincide', cotejo_unknown:'No verificable',
+      sig_detected:'Firma detectada', sig_not_detected:'Firma no detectada',
+      f_endorsement_present:'Endoso presente', f_endorsement_type:'Tipo de endoso', f_endorsee:'Endosatario', f_endorser_signature:'Firma del endosante', f_endorsement_text:'Texto del endoso', f_bank_stamp:'Sello bancario', f_deposit_account:'Cuenta de depósito',
+      conf_high:'alta', conf_med:'revisar', conf_low:'baja',
+    },
+    en: {
+      nav_product:'Product', nav_how:'How it works', nav_contact:'Contact',
+      hero_pill:'ICR engine for bank checks',
+      hero_title:'Check data extraction with measurable confidence',
+      hero_sub:'ICR engine fine-tuned on LayoutLMv3, returning normalized fields, parsed MICR line, and signature classification with per-field confidence scores.',
+      metrics_title:'Production performance',
+      metric_fields:'Fields extracted', metric_acc:'Average precision', metric_lat:'Mean latency',
+      demo_title:'Try the engine with your own check', demo_sub:'The response you see here is what your integration consumes.',
+      api_ok:'API operational',
+      slot_front:'Check front', slot_back:'Check back',
+      required:'Required', optional:'Optional',
+      dz_primary:'Drop an image or browse your computer', max_size:'max 10 MB',
+      back_note:'Required only to verify endorsement',
+      process:'Process check', load_sample:'Use sample check',
+      opt_sig:'Signature detection', opt_ev:'Include evidence',
+      pipeline:'Pipeline',
+      step_norm:'Image normalization', step_ocr:'OCR', step_map:'Token mapping', step_inf:'ICR inference', step_sig:'Signature classification',
+      st_pending:'Pending', st_running:'Running', st_done:'Done',
+      confidence:'Confidence',
+      signed:'SIGNED', unsigned:'UNSIGNED',
+      endorsed:'ENDORSED', unendorsed:'NOT ENDORSED',
+      no_back:'Endorsement — upload the check back to verify',
+      total_time:'Total time',
+      extracted:'Extracted fields',
+      col_field:'Field', col_value:'Extracted value', col_normalized:'Normalized value', col_conf:'Confidence',
+      copy_json:'Copy JSON', copied:'Copied', download_json:'Download .json',
+      raw_json:'View raw API response',
+      how_kicker:'How it works', how_title:'From check to JSON in four steps',
+      how_1t:'Ingest', how_1d:'Upload a JPG or PNG of the check. No manual preprocessing.',
+      how_2t:'Normalization + OCR', how_2d:'Perspective and noise are corrected, OCR runs and the document is tokenized.',
+      how_3t:'ICR inference', how_3d:'LayoutLMv3 identifies and classifies each field with per-token scores.',
+      how_4t:'Structured output', how_4d:'JSON with raw values, normalized values, and parsed MICR.',
+      spec_kicker:'Product', spec_title:'Technical spec',
+      spec_fields:'Supported fields', spec_fields_v:'12 (payee, maker, amount, amount_words, date, bank, check_number, MICR line, MICR routing/account/check, maker_address)',
+      spec_formats:'Accepted formats', spec_formats_v:'JPG, PNG · up to 10 MB',
+      spec_lat:'Typical latency', spec_lat_v:'1.1 – 1.4 s per check (p95)',
+      spec_deploy:'Deployment mode', spec_deploy_v:'Managed cloud or on-premise (Docker / Kubernetes)',
+      spec_base:'Base model', spec_base_v:'LayoutLMv3 fine-tuned · ONNX Runtime',
+      spec_api:'Protocol', spec_api_v:'REST, multipart/form-data, JSON response',
+      spec_sec:'Security', spec_sec_v:'TLS 1.3, no image persistence, per-tenant isolation',
+      contact_kicker:'Contact', contact_title:'Let\u2019s talk about your integration',
+      f_name:'Name', f_email:'Work email', f_company:'Company', f_message:'Message', f_submit:'Send',
+      err_email:'Enter a valid work email',
+      contact_direct:'Direct', contact_note:'We respond within one business day. Happy to run a pilot on your own images under NDA.',
+      privacy:'Privacy', terms:'Terms',
+      err_title:'We couldn\u2019t process the check',
+      retry:'Retry',
+      f_amount:'Amount', f_amount_words:'Amount in words', f_date:'Date', f_payee:'Payee', f_maker:'Maker', f_maker_addr:'Maker address', f_bank:'Bank', f_check_number:'Check number', f_micr_line:'MICR line', f_micr_routing:'MICR · Routing', f_micr_account:'MICR · Account', f_micr_check:'MICR · Check number',
+      results_kicker:'Extraction result', results_title:'Extracted data',
+      chip_confidence:'Confidence', chip_latency:'Latency', chip_fields:'Fields', chip_scope:'Scope',
+      scope_front:'Front', scope_both:'Front + back',
+      tab_front:'Front', tab_back:'Back',
+      sub_micr:'MICR line', sub_signature:'Signature',
+      sub_micr_routing:'Routing', sub_micr_account:'Account', sub_micr_check:'Check no.',
+      verdict_kicker:'Endorsement verification',
+      verdict_valid:'Endorsement valid', verdict_absent:'Endorsement missing', verdict_illegible:'Endorsement illegible',
+      cotejo_kicker:'Front ↔ back match',
+      cotejo_front:'Payee (front)', cotejo_back:'Endorsee (back)',
+      cotejo_match:'Matches', cotejo_nomatch:'Does not match', cotejo_unknown:'Not verifiable',
+      sig_detected:'Signature detected', sig_not_detected:'Signature not detected',
+      f_endorsement_present:'Endorsement present', f_endorsement_type:'Endorsement type', f_endorsee:'Endorsee', f_endorser_signature:'Endorser signature', f_endorsement_text:'Endorsement text', f_bank_stamp:'Bank stamp', f_deposit_account:'Deposit account',
+      conf_high:'high', conf_med:'review', conf_low:'low',
+    }
+  };
+
+  // ==== sample check SVG images (data URLs) ====
+  sampleFront(){
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 920 400'>
+      <defs>
+        <pattern id='p' width='6' height='6' patternUnits='userSpaceOnUse'><path d='M0 6L6 0' stroke='#eef0f5' stroke-width='.5'/></pattern>
+      </defs>
+      <rect width='920' height='400' fill='#f8f7f1'/>
+      <rect x='8' y='8' width='904' height='384' fill='none' stroke='#c8cdd6' stroke-width='1'/>
+      <rect x='8' y='8' width='904' height='384' fill='url(#p)'/>
+      <text x='40' y='52' font-family='Georgia, serif' font-size='22' font-weight='700' fill='#1f2b4b'>BANCO NACIONAL</text>
+      <text x='40' y='72' font-family='Helvetica' font-size='10' fill='#5a6478'>SUCURSAL 0142 · CENTRO</text>
+      <text x='740' y='52' font-family='Helvetica' font-size='10' fill='#5a6478'>FECHA</text>
+      <text x='740' y='72' font-family='Helvetica' font-size='14' fill='#1a1a1a'>15 / 03 / 2026</text>
+      <text x='740' y='92' font-family='Helvetica' font-size='10' fill='#5a6478'>N\u00b0</text>
+      <text x='770' y='92' font-family='Helvetica' font-size='14' fill='#1a1a1a' font-weight='600'>0004521</text>
+      <text x='40' y='150' font-family='Helvetica' font-size='11' fill='#5a6478'>P\u00c1GUESE A LA ORDEN DE</text>
+      <line x1='40' y1='172' x2='650' y2='172' stroke='#a8b0bf' stroke-width='.6'/>
+      <text x='80' y='168' font-family='Georgia, serif' font-size='18' fill='#1a1a1a'>Acme Industrial S.A.</text>
+      <rect x='680' y='128' width='190' height='52' fill='#ffffff' stroke='#8f97a8' stroke-width='.8'/>
+      <text x='690' y='150' font-family='Helvetica' font-size='9' fill='#5a6478'>$</text>
+      <text x='700' y='163' font-family='Helvetica' font-size='20' font-weight='700' fill='#1a1a1a'>1,250.00</text>
+      <text x='40' y='210' font-family='Helvetica' font-size='11' fill='#5a6478'>LA SUMA DE</text>
+      <line x1='40' y1='232' x2='860' y2='232' stroke='#a8b0bf' stroke-width='.6'/>
+      <text x='80' y='228' font-family='Georgia, serif' font-size='16' fill='#1a1a1a'>Un mil doscientos cincuenta con 00/100 pesos</text>
+      <text x='40' y='290' font-family='Helvetica' font-size='10' fill='#5a6478'>Roberto Mart\u00ednez L\u00f3pez</text>
+      <text x='40' y='306' font-family='Helvetica' font-size='10' fill='#5a6478'>Av. Corrientes 1234, CABA</text>
+      <line x1='560' y1='330' x2='830' y2='330' stroke='#a8b0bf' stroke-width='.6'/>
+      <text x='585' y='325' font-family='"Homemade Apple", "Segoe Script", cursive' font-size='18' fill='#2a3f6d' font-style='italic'>Roberto Mart\u00ednez</text>
+      <text x='620' y='344' font-family='Helvetica' font-size='9' fill='#5a6478'>FIRMA AUTORIZADA</text>
+      <rect x='0' y='348' width='920' height='40' fill='#f2f0e8'/>
+      <text x='80' y='378' font-family='"Courier New", monospace' font-size='22' letter-spacing='4' fill='#1a1a1a'>\u2488004521\u2488  \u2486021000021\u2486  1234567890\u2488</text>
+    </svg>`;
+    return 'data:image/svg+xml;utf8,'+encodeURIComponent(svg);
+  }
+  sampleBack(){
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 920 400'>
+      <rect width='920' height='400' fill='#f8f7f1'/>
+      <rect x='8' y='8' width='904' height='384' fill='none' stroke='#c8cdd6' stroke-width='1'/>
+      <rect x='40' y='40' width='840' height='40' fill='none' stroke='#a8b0bf' stroke-dasharray='4 3' stroke-width='.6'/>
+      <text x='52' y='64' font-family='Helvetica' font-size='10' fill='#5a6478'>ENDOSAR AQU\u00cd \u00b7 ENDORSE HERE</text>
+      <line x1='60' y1='140' x2='720' y2='140' stroke='#a8b0bf' stroke-width='.6'/>
+      <text x='100' y='134' font-family='"Homemade Apple", "Segoe Script", cursive' font-size='20' fill='#2a3f6d' font-style='italic'>Acme Industrial S.A. \u00b7 Juan P\u00e9rez</text>
+      <text x='60' y='170' font-family='Helvetica' font-size='10' fill='#5a6478'>CUIT 30-71234567-8 \u00b7 CTA 1234567890</text>
+      <text x='60' y='310' font-family='Helvetica' font-size='9' fill='#8a92a2'>NO ESCRIBA NI FIRME DEBAJO DE ESTA L\u00cdNEA</text>
+      <line x1='40' y1='320' x2='880' y2='320' stroke='#c8cdd6' stroke-width='.6'/>
+    </svg>`;
+    return 'data:image/svg+xml;utf8,'+encodeURIComponent(svg);
+  }
+
+  // Mock response — realistic latencies + bboxes matching the sample front SVG (px on 920x400)
+  mockPredictResponse = () => ({
+    file_name: this.state.frontName || 'check_front.png',
+    ocr_source: 'internal',
+    image_normalization_ms: 138,
+    ocr_ms: 412,
+    ocr_mapping_ms: 96,
+    inference_ms: 486,
+    total_processing_ms: 1183,
+    entities: {
+      amount:            { text:'$1,250.00',                                score:0.994, bbox:[680,128,870,180] },
+      amount_words:      { text:'Un mil doscientos cincuenta con 00/100',   score:0.912, bbox:[80,210,700,238] },
+      date:              { text:'15/03/2026',                               score:0.988, bbox:[720,52,880,80] },
+      payee:             { text:'Acme Industrial S.A.',                     score:0.973, bbox:[80,150,620,178] },
+      maker:             { text:'Roberto Martínez López',                   score:0.947, bbox:[560,290,830,335] },
+      maker_address:     { text:'Av. Corrientes 1234, CABA',                score:0.882, bbox:[40,296,400,320] },
+      bank_name:         { text:'Banco Nacional',                           score:0.996, bbox:[40,32,280,58] },
+      check_number:      { text:'0004521',                                  score:0.981, bbox:[770,78,880,98] },
+      micr_line:         { text:'⑈004521⑈ ⑆021000021⑆ 1234567890⑈',      score:0.968, bbox:[80,358,780,388] },
+      micr_routing:      { text:'021000021',                                score:0.995, bbox:[262,358,462,388] },
+      micr_account:      { text:'1234567890',                               score:0.971, bbox:[482,358,660,388] },
+      micr_check_number: { text:'004521',                                   score:0.978, bbox:[82,358,244,388] },
+    },
+    normalized_properties: {
+      amount_normalized:'1250.00', amount_words_normalized:'1250.00',
+      date_normalized:'2026-03-15',
+      payee_normalized:'Acme Industrial S.A.',
+      maker_normalized:'Roberto Martínez López',
+      maker_address_normalized:'Av. Corrientes 1234, Ciudad Autónoma de Buenos Aires',
+      bank_name_normalized:'Banco Nacional',
+      check_number_normalized:'0004521',
+      micr_line_normalized:'004521 021000021 1234567890',
+      micr_check_number:'004521', micr_routing_number:'021000021', micr_account_number:'1234567890',
+    },
+    classification: this.state.optSig ? {
+      signature: { enabled:true, status:'ok', result:{ signed:true, label:'signed', score:0.973 }, processing_ms:124 }
+    } : undefined,
+  });
+  mockEndorseResponse = () => ({
+    file_name: this.state.backName || 'check_back.png',
+    endorsed: true, label:'endorsed', score:0.941,
+    image_normalization_ms:118, inference_ms:97, total_processing_ms:224,
+    entities: {
+      endorsement_present: { text:'true',                              score:0.983 },
+      endorsement_type:    { text:'a la orden',                        score:0.912 },
+      endorsee:            { text:'Acme Industrial S.A.',              score:0.947 },
+      endorser_signature:  { text:'detectada',                         score:0.921 },
+      endorsement_text:    { text:'Acme Industrial S.A. \u00b7 Juan P\u00e9rez',           score:0.884 },
+      bank_stamp:          { text:'no detectado',                      score:0.612 },
+      deposit_account:     { text:'1234567890',                        score:0.883 },
+    },
+  });
+
+  // ==== handlers ====
+  setLang = (l) => { this.setState({lang:l}); try{localStorage.setItem('checkicr_lang',l)}catch(e){} };
+
+  readFile = async (file, side) => {
+    const url = await new Promise((res,rej)=>{ const r = new FileReader(); r.onload = ()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); });
+    const dim = await new Promise((res)=>{ const im = new Image(); im.onload=()=>res({w:im.naturalWidth,h:im.naturalHeight}); im.onerror=()=>res({w:0,h:0}); im.src=url; });
+    if(side==='front'){
+      this.setState({frontFile:file, frontUrl:url, frontName:file.name, frontSize:file.size, frontDim:dim, status:this.state.status==='results'?'idle':this.state.status, result:null});
+    } else {
+      this.setState({backFile:file, backUrl:url, backName:file.name, backSize:file.size, backDim:dim, endorseResult:null});
+    }
+  };
+
+  onDropFile = (e, side) => {
+    e.preventDefault();
+    this.setState(side==='front'?{dragFront:false}:{dragBack:false});
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if(f && /^image\/(jpe?g|png)$/.test(f.type)) this.readFile(f, side);
+  };
+  onInputFile = (e, side) => { const f = e.target.files && e.target.files[0]; if(f) this.readFile(f, side); e.target.value=''; };
+  removeFile = (side) => { if(side==='front') this.setState({frontFile:null,frontUrl:null,frontName:'',frontSize:0,frontDim:null,result:null,status:'idle'}); else this.setState({backFile:null,backUrl:null,backName:'',backSize:0,backDim:null,endorseResult:null}); };
+
+  loadSample = () => {
+    const front = this.sampleFront(); const back = this.sampleBack();
+    this.setState({
+      frontUrl:front, frontName:'sample_front.svg', frontSize:38400, frontDim:{w:920,h:400}, frontFile:{}, result:null, status:'idle',
+      backUrl:back, backName:'sample_back.svg', backSize:22100, backDim:{w:920,h:400}, backFile:{}, endorseResult:null,
+    });
+  };
+
+  processCheck = async () => {
+    if(!this.state.frontUrl) return;
+    const stepsDef = [
+      {key:'norm', ms:138}, {key:'ocr', ms:412}, {key:'map', ms:96}, {key:'inf', ms:486},
+      ...(this.state.optSig? [{key:'sig', ms:124}]:[])
+    ];
+    this.setState({status:'processing', error:null, result:null, endorseResult:null, steps: stepsDef.map(s=>({...s, done:false, running:false}))});
+    let acc = 0;
+    for(let i=0;i<stepsDef.length;i++){
+      this.setState({steps: this.state.steps.map((s,j)=>({...s, running: j===i, done: j<i}))});
+      await new Promise(r=>setTimeout(r, stepsDef[i].ms));
+      acc += stepsDef[i].ms;
+      this.setState({steps: this.state.steps.map((s,j)=>({...s, running:false, done: j<=i}))});
+    }
+    // Roll a 1-in-20 fake failure if user hasn't loaded anything real (never fires for sample) — skip; always succeed
+    const result = this.mockPredictResponse();
+    let endorseResult = null;
+    if(this.state.backUrl){ endorseResult = this.mockEndorseResponse(); }
+    this.setState({status:'results', result, endorseResult});
+  };
+
+  toggle = (k) => this.setState({[k]: !this.state[k]});
+  setFace = (f) => this.setState({activeFace:f});
+
+  copyJson = () => {
+    const payload = { predict: this.state.result, endorse: this.state.endorseResult };
+    try{ navigator.clipboard.writeText(JSON.stringify(payload, null, 2)); }catch(e){}
+    this.setState({copyState:1});
+    setTimeout(()=>this.setState({copyState:0}), 1400);
+  };
+  downloadJson = () => {
+    const payload = { predict: this.state.result, endorse: this.state.endorseResult };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'checkicr_response.json'; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url), 400);
+  };
+
+  openZoom = (side) => { this.setState({zoom:{side, scale:1, tx:0, ty:0}}); };
+  closeZoom = () => this.setState({zoom:null});
+  zoomIn = () => { const z=this.state.zoom; if(!z) return; this.setState({zoom:{...z, scale: Math.min(6, z.scale + .25)}}); };
+  zoomOut = () => { const z=this.state.zoom; if(!z) return; this.setState({zoom:{...z, scale: Math.max(.5, z.scale - .25)}}); };
+  zoomWheel = (e) => { e.preventDefault(); const z=this.state.zoom; if(!z) return; const d = e.deltaY < 0 ? .15 : -.15; this.setState({zoom:{...z, scale: Math.max(.5, Math.min(6, z.scale + d))}}); };
+  panStart = (e) => {
+    const z = this.state.zoom; if(!z) return;
+    const startX = e.clientX, startY = e.clientY, tx0 = z.tx, ty0 = z.ty;
+    const mv = (ev) => { const cz = this.state.zoom; if(!cz) return; this.setState({zoom:{...cz, tx: tx0 + (ev.clientX-startX), ty: ty0 + (ev.clientY-startY)}}); };
+    const up = () => { window.removeEventListener('mousemove', mv); window.removeEventListener('mouseup', up); };
+    window.addEventListener('mousemove', mv); window.addEventListener('mouseup', up);
+  };
+
+  formatBytes = (n) => { if(!n) return '—'; if(n<1024) return n+' B'; if(n<1024*1024) return (n/1024).toFixed(1)+' KB'; return (n/1024/1024).toFixed(1)+' MB'; };
+
+  onMagMove = (e, side) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left, y = e.clientY - rect.top;
+    const key = side==='front' ? 'magFront' : 'magBack';
+    this.setState({[key]: {x, y, w: rect.width, h: rect.height}});
+  };
+  onMagLeave = (side) => this.setState({[side==='front'?'magFront':'magBack']: null});
+
+  submitContact = (e) => {
+    e.preventDefault();
+    const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.state.contact.email);
+    this.setState({emailErr: !ok});
+    if(ok) alert('Mock submit — thank you.');
+  };
+
+  renderVals(){
+    const s = this.state;
+    const t = this.T[s.lang];
+    const isProcessing = s.status === 'processing';
+    const hasResults = s.status === 'results' && !!s.result;
+    const hasError = s.status === 'error';
+
+    // language toggle
+    const langBase = 'padding:4px 10px;font-size:11.5px;font-weight:600;letter-spacing:0.03em;border-radius:4px;';
+    const langBtnEs = langBase + (s.lang==='es' ? 'background:#F4F4F5;color:#6D42D9' : 'background:transparent;color:#52525B');
+    const langBtnEn = langBase + (s.lang==='en' ? 'background:#F4F4F5;color:#6D42D9' : 'background:transparent;color:#52525B');
+
+    // dropzone styles
+    const dzBase = 'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:220px;border-radius:6px;text-align:center;padding:16px;cursor:pointer;transition:background .15s ease-out,border-color .15s ease-out;';
+    const dzFront = dzBase + (s.dragFront ? 'border:1.5px solid #6D42D9;background:rgba(109,66,217,.04)' : 'border:1px dashed #D4D4D8;background:#FCFCFD');
+    const dzBack  = dzBase + (s.dragBack  ? 'border:1.5px solid #6D42D9;background:rgba(109,66,217,.04)' : 'border:1px dashed #D4D4D8;background:#FCFCFD');
+
+    // process button
+    const processDisabled = !s.frontUrl || isProcessing;
+    const processBtnStyle = 'padding:9px 16px;background:'+(processDisabled?'#C4B8EB':'#6D42D9')+';color:#FFFFFF;font-size:13px;font-weight:500;border-radius:6px;transition:background .15s ease-out;'+(processDisabled?'cursor:not-allowed':'');
+
+    // toggles
+    const toggleStyle = (on) => 'display:inline-block;position:relative;width:28px;height:16px;border-radius:999px;background:'+(on?'#6D42D9':'#D4D4D8')+';transition:background .15s ease-out;flex:none';
+    const toggleDot = (on) => 'position:absolute;top:2px;left:'+(on?'14px':'2px')+';width:12px;height:12px;background:#FFFFFF;border-radius:50%;transition:left .15s ease-out';
+
+    // pipeline steps
+    const stepMap = { norm:t.step_norm, ocr:t.step_ocr, map:t.step_map, inf:t.step_inf, sig:t.step_sig };
+    const spinIcon = React.createElement('span', { style:{display:'inline-block',width:12,height:12,border:'2px solid #E4E4E7',borderTopColor:'#6D42D9',borderRadius:'50%',animation:'spin .8s linear infinite'} });
+    const doneIcon = React.createElement('svg', { width:12, height:12, viewBox:'0 0 24 24', fill:'none', stroke:'#0E9C9C', strokeWidth:2.5, strokeLinecap:'round', strokeLinejoin:'round' }, React.createElement('polyline',{points:'20 6 9 17 4 12'}));
+    const pendIcon = React.createElement('span', { style:{width:5,height:5,borderRadius:'50%',background:'#D4D4D8'} });
+    const steps = (s.steps || []).map(st => ({
+      key: st.key,
+      label: stepMap[st.key] || st.key,
+      icon: st.done ? doneIcon : (st.running ? spinIcon : pendIcon),
+      color: st.done ? '#09090B' : (st.running ? '#09090B' : '#A1A1AA'),
+      timeLabel: st.done ? (st.ms + ' ms') : (st.running ? t.st_running : t.st_pending),
+    }));
+
+    // results source
+    const r = s.result;
+    const er = s.endorseResult;
+
+    // how it works
+    const howSteps = [
+      {n:'01', title:t.how_1t, desc:t.how_1d, cardBg:'#F4FAFA', accent:'#0E9C9C'},
+      {n:'02', title:t.how_2t, desc:t.how_2d, cardBg:'#F3F6FB', accent:'#4A6BC7'},
+      {n:'03', title:t.how_3t, desc:t.how_3d, cardBg:'#F5F1FB', accent:'#7A5CD9'},
+      {n:'04', title:t.how_4t, desc:t.how_4d, cardBg:'#F1EBFA', accent:'#6D42D9'},
+    ];
+
+    const specs = [
+      {k:t.spec_fields, v:t.spec_fields_v},
+      {k:t.spec_formats, v:t.spec_formats_v},
+      {k:t.spec_lat, v:t.spec_lat_v},
+      {k:t.spec_deploy, v:t.spec_deploy_v},
+      {k:t.spec_base, v:t.spec_base_v},
+      {k:t.spec_api, v:t.spec_api_v},
+      {k:t.spec_sec, v:t.spec_sec_v},
+    ];
+
+    // preview components as createElement (small, self-contained; preserves bbox math + magnifier state)
+    const makePreview = (side) => {
+      const url = side==='front' ? s.frontUrl : s.backUrl;
+      const name = side==='front' ? s.frontName : s.backName;
+      const size = side==='front' ? s.frontSize : s.backSize;
+      const dim = side==='front' ? s.frontDim : s.backDim;
+      const mag = side==='front' ? s.magFront : s.magBack;
+      if(!url) return null;
+      const bboxes = (side==='front' && hasResults && s.hoverField && r.entities[s.hoverField] && r.entities[s.hoverField].bbox)
+        ? [{ box: r.entities[s.hoverField].bbox, w:920, h:400 }]
+        : [];
+      return React.createElement('div', null,
+        React.createElement('div', {
+          style:{position:'relative', aspectRatio:'2.3 / 1', background:'#F4F4F5', border:'1px solid #E4E4E7', borderRadius:'6px 6px 0 0', overflow:'hidden', cursor: mag ? 'zoom-in' : 'default'},
+          onMouseMove: (e) => this.onMagMove(e, side),
+          onMouseLeave: () => this.onMagLeave(side),
+        },
+          React.createElement('img', { src:url, style:{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'contain',display:'block',pointerEvents:'none'}, draggable:false, alt:'' }),
+          bboxes.map((b,i) => {
+            const [x1,y1,x2,y2] = b.box;
+            const left = (x1/b.w)*100+'%', top = (y1/b.h)*100+'%', width = ((x2-x1)/b.w)*100+'%', height = ((y2-y1)/b.h)*100+'%';
+            const cornerCol = '#6D42D9';
+            const cornerSize = 8;
+            const cs = (extra) => Object.assign({position:'absolute', width:cornerSize+'px', height:cornerSize+'px', borderColor:cornerCol, borderStyle:'solid'}, extra);
+            return React.createElement('div', { key:i, style:{position:'absolute', left, top, width, height, boxShadow:'0 0 0 1.5px '+cornerCol, pointerEvents:'none'} },
+              React.createElement('div', {style: cs({top:'-2px',left:'-2px',borderWidth:'2px 0 0 2px'})}),
+              React.createElement('div', {style: cs({top:'-2px',right:'-2px',borderWidth:'2px 2px 0 0'})}),
+              React.createElement('div', {style: cs({bottom:'-2px',left:'-2px',borderWidth:'0 0 2px 2px'})}),
+              React.createElement('div', {style: cs({bottom:'-2px',right:'-2px',borderWidth:'0 2px 2px 0'})}),
+            );
+          }),
+          mag ? React.createElement('div', {
+            style:{position:'absolute', pointerEvents:'none',
+              width:'120px', height:'120px', borderRadius:'50%', border:'1.5px solid #6D42D9',
+              boxShadow:'0 4px 12px rgba(16,24,40,.15)',
+              left: Math.max(0, Math.min(mag.w-120, mag.x-60))+'px',
+              top: Math.max(0, Math.min(mag.h-120, mag.y-60))+'px',
+              backgroundImage:'url("'+url+'")',
+              backgroundRepeat:'no-repeat',
+              backgroundSize: (mag.w*2.8)+'px '+(mag.h*2.8)+'px',
+              backgroundPosition: (-(mag.x*2.8)+60)+'px '+(-(mag.y*2.8)+60)+'px',
+              backgroundColor:'#FFFFFF',
+            }
+          }) : null,
+          React.createElement('button', {
+            onClick: () => this.openZoom(side),
+            'aria-label':'Ampliar',
+            style:{position:'absolute', top:'8px', right:'8px', width:'28px', height:'28px', borderRadius:'5px', background:'rgba(255,255,255,.9)', border:'1px solid #E4E4E7', display:'flex', alignItems:'center', justifyContent:'center'}
+          },
+            React.createElement('svg', {width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'#09090B',strokeWidth:1.5},
+              React.createElement('circle',{cx:11,cy:11,r:7}),
+              React.createElement('line',{x1:21,y1:21,x2:16.65,y2:16.65}),
+              React.createElement('line',{x1:8,y1:11,x2:14,y2:11}),
+              React.createElement('line',{x1:11,y1:8,x2:11,y2:14}),
+            )
+          ),
+        ),
+        React.createElement('div', {style:{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,padding:'8px 10px',border:'1px solid #E4E4E7',borderTop:'none',borderRadius:'0 0 6px 6px',background:'#FFFFFF',fontSize:'11.5px',color:'#52525B'}},
+          React.createElement('div', {className:'mono', style:{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flex:1}}, name),
+          React.createElement('div', {className:'num mono', style:{color:'#A1A1AA',flex:'none'}}, this.formatBytes(size) + (dim && dim.w ? '  ·  '+dim.w+'×'+dim.h : '')),
+          React.createElement('button', { onClick: () => this.removeFile(side), 'aria-label':'Quitar', style:{width:20,height:20,borderRadius:4,color:'#52525B',fontSize:14,lineHeight:1} }, '×'),
+        ),
+      );
+    };
+
+    // ==== NEW RESULTS SECTION ====
+    const isError = s.status === 'error';
+    const resultsVisible = isProcessing || hasResults || isError;
+    const hasBoth = !!s.backUrl;
+    const activeFace = (hasBoth ? s.activeFace : 'front');
+
+    // fade-in style
+    const revealed = resultsVisible ? 'opacity:1;transform:translateY(0)' : 'opacity:0;transform:translateY(8px);pointer-events:none';
+    const resultsSectionStyle = 'margin-top:32px;transition:opacity .25s ease-out,transform .25s ease-out;'+revealed;
+
+    // score tone helper — spec: >=.95 high (violet), .80–.94 med (amber), <.80 low (red). Icon + % (never color-only).
+    const tone = (sc) => {
+      if(sc >= 0.95) return { bar:'#6D42D9', bg:'#F1EBFA', fg:'#5A36B8', icon:'●', label:t.conf_high };
+      if(sc >= 0.80) return { bar:'#B45309', bg:'#FEF3E4', fg:'#8A3F07', icon:'!', label:t.conf_med };
+      return                { bar:'#DC2626', bg:'#FDE7E7', fg:'#B01D1D', icon:'▼', label:t.conf_low };
+    };
+    const chipStyleFor = (sc) => { const T=tone(sc); return 'display:inline-flex;align-items:center;gap:5px;padding:2px 7px;border-radius:999px;background:'+T.bg+';color:'+T.fg+';font-size:11px;font-weight:600;flex:none'; };
+    const cardStyleFor = (sc) => 'border:1px solid '+(sc<0.80?'#DC262640':'#E4E4E7')+';border-radius:6px;padding:10px 12px;background:'+(sc<0.80?'#FDE7E708':'#FFFFFF')+';outline:none;box-shadow:none';
+
+    // header chips
+    const scoresAll = r ? Object.values(r.entities).map(e=>e.score) : [];
+    const avgConf = scoresAll.length ? (scoresAll.reduce((a,b)=>a+b,0)/scoresAll.length) : 0;
+    const latencySec = r ? (r.total_processing_ms/1000).toFixed(2)+'s' : '—';
+    const fieldsCount = r ? Object.keys(r.entities).length : 0;
+    const scopeVal = hasBoth ? t.scope_both : t.scope_front;
+    const avgTone = tone(avgConf);
+    const headerChips = hasResults ? [
+      {label:t.chip_confidence, value:(avgConf*100).toFixed(1)+'%', dotColor:avgTone.bar},
+      {label:t.chip_latency,    value:latencySec, dotColor:'#0E9C9C'},
+      {label:t.chip_fields,     value:String(fieldsCount), dotColor:'#6D42D9'},
+      {label:t.chip_scope,      value:scopeVal, dotColor:'#B45309'},
+    ].map(c => ({
+      ...c,
+      style:'display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid #E4E4E7;border-radius:999px;background:#FCFCFD;font-size:11.5px',
+      dotStyle:'width:6px;height:6px;border-radius:50%;background:'+c.dotColor,
+    })) : [];
+
+    // skeleton cards
+    const skeletonCards = Array.from({length: 12}, (_,i) => ({ i }));
+
+    // FRONT field cards (spec order — all 12)
+    const frontDefs = r ? [
+      ['payee',              t.f_payee,           r.normalized_properties.payee_normalized],
+      ['maker',              t.f_maker,           r.normalized_properties.maker_normalized],
+      ['amount',             t.f_amount,          r.normalized_properties.amount_normalized],
+      ['amount_words',       t.f_amount_words,    r.normalized_properties.amount_words_normalized],
+      ['date',               t.f_date,            r.normalized_properties.date_normalized],
+      ['bank_name',          t.f_bank,            r.normalized_properties.bank_name_normalized],
+      ['check_number',       t.f_check_number,    r.normalized_properties.check_number_normalized],
+      ['micr_line',          t.f_micr_line,       r.normalized_properties.micr_line_normalized],
+      ['micr_routing',       t.f_micr_routing,    r.normalized_properties.micr_routing_number],
+      ['micr_account',       t.f_micr_account,    r.normalized_properties.micr_account_number],
+      ['micr_check_number',  t.f_micr_check,      r.normalized_properties.micr_check_number],
+      ['maker_address',      t.f_maker_addr,      r.normalized_properties.maker_address_normalized],
+    ] : [];
+    const frontFieldCards = frontDefs.map(([key,label,norm]) => {
+      const e = r.entities[key];
+      const sc = e ? e.score : 0;
+      const T = tone(sc);
+      const raw = e ? e.text : '—';
+      const showNorm = !!(norm && String(norm).trim() && String(norm).trim() !== String(raw).trim());
+      const isHover = s.hoverField === key;
+      let style = cardStyleFor(sc);
+      if(isHover) style = style.replace(';box-shadow:none','') + ';box-shadow:0 0 0 1px rgba(109,66,217,.35) inset';
+      return {
+        key, label,
+        value: raw,
+        normalized: norm || '',
+        showNormalized: showNorm,
+        style,
+        chipStyle: chipStyleFor(sc),
+        chipIcon: T.icon,
+        scorePct: Math.round(sc*100)+'%',
+        scoreBar: Math.round(sc*100)+'%',
+        barColor: T.bar,
+        onEnter: e ? () => this.setState({hoverField:key}) : undefined,
+        onLeave: e ? () => this.setState({hoverField:null}) : undefined,
+      };
+    });
+
+    // MICR sub-block
+    const micrEntity = r ? r.entities.micr_line : null;
+    const micrFull = micrEntity ? micrEntity.text : '';
+    const micrToneT = micrEntity ? tone(micrEntity.score) : tone(0);
+    const micrChipStyle = micrEntity ? chipStyleFor(micrEntity.score) : '';
+    const micrChipIcon = micrEntity ? micrToneT.icon : '';
+    const micrScorePct = micrEntity ? Math.round(micrEntity.score*100)+'%' : '';
+    const micrParts = r ? [
+      ['micr_routing',      t.sub_micr_routing, r.normalized_properties.micr_routing_number],
+      ['micr_account',      t.sub_micr_account, r.normalized_properties.micr_account_number],
+      ['micr_check_number', t.sub_micr_check,   r.normalized_properties.micr_check_number],
+    ].map(([k,label,val]) => {
+      const e = r.entities[k]; const sc = e ? e.score : 0; const T2 = tone(sc);
+      return { label, value: val||'—', scorePct: Math.round(sc*100)+'%', scoreBar: Math.round(sc*100)+'%', color: T2.fg, barColor: T2.bar };
+    }) : [];
+
+    // Signature sub-block
+    const sigEntity = r && r.classification && r.classification.signature && r.classification.signature.result;
+    const sigOn = s.optSig;
+    const sigDetected = sigEntity ? sigEntity.signed : false;
+    const sigScore = sigEntity ? sigEntity.score : 0;
+    const sigT = tone(sigScore);
+    const sigLabelStr = sigDetected ? t.sig_detected : t.sig_not_detected;
+    const sigChipStyle = chipStyleFor(sigScore);
+    const sigBg = sigDetected ? 'rgba(109,66,217,.10)' : 'rgba(180,83,9,.10)';
+    const sigColorStr = sigDetected ? '#6D42D9' : '#B45309';
+    const sigScorePct = Math.round(sigScore*100)+'%';
+    const showSignature = hasResults && sigOn && !!sigEntity && activeFace==='front';
+
+    // BACK verdict + fields + cotejo
+    const er2 = s.endorseResult;
+    const endorseEntities = er2 && er2.entities ? er2.entities : {};
+    // Verdict determination
+    let verdictLabel = t.verdict_absent, verdictColor = '#B45309', verdictBg = 'rgba(180,83,9,.12)', verdictScore = 0;
+    if(er2){
+      if(er2.endorsed && er2.score >= 0.80){ verdictLabel = t.verdict_valid; verdictColor = '#6D42D9'; verdictBg = 'rgba(109,66,217,.12)'; verdictScore = er2.score; }
+      else if(er2.endorsed && er2.score < 0.80){ verdictLabel = t.verdict_illegible; verdictColor = '#B45309'; verdictBg = 'rgba(180,83,9,.12)'; verdictScore = er2.score; }
+      else { verdictLabel = t.verdict_absent; verdictColor = '#B45309'; verdictBg = 'rgba(180,83,9,.12)'; verdictScore = er2.score; }
+    }
+    const verdictT = tone(verdictScore);
+    const verdictBoxStyle = 'display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;border:1px solid #E4E4E7;border-radius:6px;background:'+verdictBg+';margin-bottom:10px';
+    const verdictChipStyle = chipStyleFor(verdictScore);
+    const verdictChipIcon = verdictT.icon;
+    const verdictScorePct = Math.round(verdictScore*100)+'%';
+    const verdictIconEl = React.createElement('svg', {width:18,height:18,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.7,strokeLinecap:'round',strokeLinejoin:'round'},
+      verdictLabel===t.verdict_valid ? React.createElement('polyline',{points:'20 6 9 17 4 12'}) :
+      React.createElement('g', null, React.createElement('circle',{cx:12,cy:12,r:9}), React.createElement('line',{x1:12,y1:8,x2:12,y2:13}), React.createElement('circle',{cx:12,cy:16,r:.6,fill:'currentColor'}))
+    );
+
+    // Cotejo
+    const normalize = (v) => (v||'').toLowerCase().replace(/[^a-z0-9áéíóúñü ]/g,'').replace(/\s+/g,' ').trim();
+    const payeeFront = r ? (r.normalized_properties.payee_normalized || (r.entities.payee && r.entities.payee.text)) : '';
+    const endorseeBack = endorseEntities.endorsee ? endorseEntities.endorsee.text : '';
+    let cotejoStatus = 'unknown';
+    if(payeeFront && endorseeBack){ cotejoStatus = (normalize(payeeFront) === normalize(endorseeBack) ? 'match' : 'nomatch'); }
+    const cotejoTones = {
+      match:   { color:'#6D42D9', bg:'rgba(109,66,217,.08)', label:t.cotejo_match, chipBg:'#F1EBFA', chipFg:'#5A36B8' },
+      nomatch: { color:'#B45309', bg:'rgba(180,83,9,.08)',    label:t.cotejo_nomatch, chipBg:'#FEF3E4', chipFg:'#8A3F07' },
+      unknown: { color:'#A1A1AA', bg:'#FCFCFD',                label:t.cotejo_unknown, chipBg:'#F4F4F5', chipFg:'#52525B' },
+    };
+    const cotejo = cotejoTones[cotejoStatus];
+    const cotejoBoxStyle = 'padding:10px 14px;border:1px solid #E4E4E7;border-radius:6px;background:'+cotejo.bg;
+    const cotejoChipStyle = 'display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;background:'+cotejo.chipBg+';color:'+cotejo.chipFg+';font-size:11px;font-weight:600;margin-left:auto';
+
+    // Back field cards
+    const backDefs = [
+      ['endorsement_present', t.f_endorsement_present, false],
+      ['endorsement_type',    t.f_endorsement_type,    false],
+      ['endorsee',            t.f_endorsee,            false],
+      ['endorser_signature',  t.f_endorser_signature,  false],
+      ['endorsement_text',    t.f_endorsement_text,    true],
+      ['bank_stamp',          t.f_bank_stamp,          false],
+      ['deposit_account',     t.f_deposit_account,     false],
+    ];
+    const backFieldCards = er2 ? backDefs.map(([key,label,wide]) => {
+      const e = endorseEntities[key];
+      const sc = e ? e.score : 0;
+      const T = tone(sc);
+      let base = cardStyleFor(sc);
+      if(wide) base += ';grid-column:1 / -1';
+      return {
+        key, label,
+        value: e ? e.text : '—',
+        style: base,
+        chipStyle: chipStyleFor(sc),
+        chipIcon: T.icon,
+        scorePct: Math.round(sc*100)+'%',
+        scoreBar: Math.round(sc*100)+'%',
+        barColor: T.bar,
+        wide: wide ? '' : '',
+      };
+    }) : [];
+
+    // Tab styles
+    const tabBase = 'padding:6px 14px;font-size:12.5px;font-weight:500;border-radius:4px;transition:background .12s ease-out;';
+    const tabFrontStyle = tabBase + (activeFace==='front' ? 'background:#FFFFFF;color:#6D42D9;box-shadow:0 1px 2px rgba(16,24,40,.06)' : 'background:transparent;color:#52525B');
+    const tabBackStyle  = tabBase + (activeFace==='back'  ? 'background:#FFFFFF;color:#6D42D9;box-shadow:0 1px 2px rgba(16,24,40,.06)' : 'background:transparent;color:#52525B');
+
+    const showFrontContent = hasResults && activeFace==='front';
+    const showBackContent  = hasResults && activeFace==='back' && hasBoth && !!er2;
+
+    const zoom = s.zoom;
+    let zoomModal = null;
+    if(zoom){
+      const zSrc = zoom.side==='front' ? s.frontUrl : s.backUrl;
+      const zTitle = zoom.side==='front' ? t.slot_front : t.slot_back;
+      const zPct = Math.round(zoom.scale*100);
+      const btnStyle = {width:28,height:28,border:'1px solid #E4E4E7',borderRadius:5,fontSize:14,background:'#FFFFFF'};
+      zoomModal = React.createElement('div', {onClick:this.closeZoom, style:{position:'fixed',inset:0,background:'rgba(9,9,11,.6)',zIndex:100,display:'flex',alignItems:'center',justifyContent:'center',padding:40}},
+        React.createElement('div', {onClick:(e)=>e.stopPropagation(), style:{position:'relative',background:'#FFFFFF',borderRadius:8,maxWidth:1100,width:'100%',maxHeight:'100%',overflow:'hidden',display:'flex',flexDirection:'column'}},
+          React.createElement('div', {style:{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',borderBottom:'1px solid #E4E4E7'}},
+            React.createElement('div', {style:{fontSize:13,fontWeight:600}}, zTitle),
+            React.createElement('div', {style:{display:'flex',alignItems:'center',gap:8}},
+              React.createElement('button', {onClick:this.zoomOut, style:btnStyle}, '−'),
+              React.createElement('div', {className:'num mono', style:{fontSize:12,minWidth:48,textAlign:'center'}}, zPct+'%'),
+              React.createElement('button', {onClick:this.zoomIn, style:btnStyle}, '+'),
+              React.createElement('button', {onClick:this.closeZoom, style:Object.assign({},btnStyle,{marginLeft:8})}, '×'),
+            ),
+          ),
+          React.createElement('div', {onWheel:this.zoomWheel, onMouseDown:this.panStart, style:{flex:1,overflow:'hidden',background:'#F4F4F5',position:'relative',minHeight:500,cursor:'grab'}},
+            React.createElement('img', {src:zSrc, draggable:false, style:{position:'absolute',left:'50%',top:'50%',transform:`translate(-50%,-50%) translate(${zoom.tx}px,${zoom.ty}px) scale(${zoom.scale})`,maxWidth:'none',maxHeight:'none',userSelect:'none',pointerEvents:'none',transformOrigin:'center'}}),
+          ),
+        ),
+      );
+    }
+
+    // raw json
+    const rawJson = r ? JSON.stringify({ predict: r, endorse: er }, null, 2) : '';
+
+    // contact
+    const emailInputStyle = 'width:100%;padding:8px 10px;border:1px solid '+(s.emailErr?'#DC2626':'#E4E4E7')+';border-radius:6px;background:#FFFFFF';
+
+    return {
+      t,
+      setLangEs: () => this.setLang('es'),
+      setLangEn: () => this.setLang('en'),
+      langBtnEs, langBtnEn,
+
+      frontHasFile: !!s.frontUrl, frontNoFile: !s.frontUrl,
+      backHasFile: !!s.backUrl, backNoFile: !s.backUrl,
+      dzFrontStyle: dzFront, dzBackStyle: dzBack,
+      dragOverFront: (e)=>{e.preventDefault(); if(!s.dragFront) this.setState({dragFront:true});},
+      dragLeaveFront: ()=>this.setState({dragFront:false}),
+      dropFront: (e)=>this.onDropFile(e,'front'),
+      dragOverBack: (e)=>{e.preventDefault(); if(!s.dragBack) this.setState({dragBack:true});},
+      dragLeaveBack: ()=>this.setState({dragBack:false}),
+      dropBack: (e)=>this.onDropFile(e,'back'),
+      pickFront: () => this._frontInput && this._frontInput.click(),
+      pickBack: () => this._backInput && this._backInput.click(),
+      keyPickFront: (e) => { if(e.key==='Enter'||e.key===' '){ e.preventDefault(); this._frontInput && this._frontInput.click(); } },
+      keyPickBack: (e) => { if(e.key==='Enter'||e.key===' '){ e.preventDefault(); this._backInput && this._backInput.click(); } },
+      frontInputRef: (el) => { this._frontInput = el; },
+      backInputRef: (el) => { this._backInput = el; },
+      onFrontInput: (e) => this.onInputFile(e,'front'),
+      onBackInput: (e) => this.onInputFile(e,'back'),
+
+      processCheck: this.processCheck,
+      processDisabled, processBtnStyle,
+      loadSample: this.loadSample,
+      toggleSig: () => this.toggle('optSig'),
+      toggleEv: () => this.toggle('optEv'),
+      toggleSigStyle: toggleStyle(s.optSig),
+      toggleSigDot: toggleDot(s.optSig),
+      toggleEvStyle: toggleStyle(s.optEv),
+      toggleEvDot: toggleDot(s.optEv),
+
+      isProcessing, hasResults, hasError, errorMsg: s.error || '',
+      steps,
+
+      copyJson: this.copyJson,
+      copyLabel: s.copyState ? t.copied : t.copy_json,
+      downloadJson: this.downloadJson,
+      rawJson,
+
+      howSteps, specs,
+
+      contact: s.contact,
+      setContactName: (e)=>this.setState({contact:{...s.contact, name:e.target.value}}),
+      setContactEmail: (e)=>this.setState({contact:{...s.contact, email:e.target.value}, emailErr:false}),
+      setContactCompany: (e)=>this.setState({contact:{...s.contact, company:e.target.value}}),
+      setContactMessage: (e)=>this.setState({contact:{...s.contact, message:e.target.value}}),
+      submitContact: this.submitContact,
+      emailError: s.emailErr,
+      emailInputStyle,
+
+      zoomModal,
+
+      // NEW results section
+      resultsVisible, resultsSectionStyle,
+      hasBoth, isProcessing, hasError, hasResults,
+      setFaceFront: () => this.setFace('front'),
+      setFaceBack: () => this.setFace('back'),
+      tabFrontStyle, tabBackStyle,
+      headerChips, skeletonCards,
+      showFrontContent, showBackContent,
+      frontFieldCards, backFieldCards,
+      micrFull, micrParts, micrChipStyle, micrChipIcon, micrScorePct,
+      showSignature, sigBg, sigColor: sigColorStr, sigLabel: sigLabelStr, sigChipStyle, sigChipIcon: sigT.icon, sigScorePct,
+      verdictBoxStyle, verdictColor, verdictBg, verdictLabel, verdictChipStyle, verdictChipIcon, verdictScorePct, verdictIconEl,
+      cotejoBoxStyle, cotejoColor: cotejo.color, cotejoChipStyle, cotejoStatusLabel: cotejo.label, cotejoFrontVal: payeeFront || '—', cotejoBackVal: endorseeBack || '—',
+
+      previewFront: makePreview('front'),
+      previewBack: makePreview('back'),
+    };
+  }
+}
+</script>
+</body>
+</html>

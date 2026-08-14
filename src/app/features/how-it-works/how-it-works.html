@@ -1,0 +1,13 @@
+<section id="how" class="section">
+  <div class="kicker">{{ i18n.t().how_kicker }}</div>
+  <h2>{{ i18n.t().how_title }}</h2>
+  <div class="grid">
+    @for (s of steps(); track s.n) {
+      <div class="card" [style.background]="s.cardBg">
+        <div class="num n" [style.color]="s.accent">{{ s.n }}</div>
+        <div class="title">{{ s.title }}</div>
+        <div class="desc">{{ s.desc }}</div>
+      </div>
+    }
+  </div>
+</section>

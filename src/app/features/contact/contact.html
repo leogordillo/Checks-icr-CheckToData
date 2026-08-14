@@ -1,0 +1,108 @@
+<section id="contact" class="section">
+  <div class="kicker">{{ i18n.t().contact_kicker }}</div>
+  <h2>{{ i18n.t().contact_title }}</h2>
+  <div class="layout">
+    <form class="form" novalidate (submit)="$event.preventDefault(); submit()">
+      <div class="field span-1">
+        <label for="contact-name">{{ i18n.t().f_name }}</label>
+        <input
+          id="contact-name"
+          type="text"
+          name="name"
+          autocomplete="name"
+          [maxlength]="maxLengths.name"
+          [(ngModel)]="name"
+          (input)="clearError('name')"
+          [class.error]="errors().name"
+          [attr.aria-invalid]="errors().name ? 'true' : null"
+        />
+        @if (errors().name; as err) {
+          <div class="error-msg">{{ err }}</div>
+        }
+      </div>
+
+      <div class="field span-1">
+        <label for="contact-email">{{ i18n.t().f_email }}</label>
+        <input
+          id="contact-email"
+          type="email"
+          name="email"
+          autocomplete="email"
+          [maxlength]="maxLengths.email"
+          [(ngModel)]="email"
+          (input)="clearError('email')"
+          [class.error]="errors().email"
+          [attr.aria-invalid]="errors().email ? 'true' : null"
+        />
+        @if (errors().email; as err) {
+          <div class="error-msg">{{ err }}</div>
+        }
+      </div>
+
+      <div class="field span-2">
+        <label for="contact-company">{{ i18n.t().f_company }}</label>
+        <input
+          id="contact-company"
+          type="text"
+          name="company"
+          autocomplete="organization"
+          [maxlength]="maxLengths.company"
+          [(ngModel)]="company"
+          (input)="clearError('company')"
+          [class.error]="errors().company"
+          [attr.aria-invalid]="errors().company ? 'true' : null"
+        />
+        @if (errors().company; as err) {
+          <div class="error-msg">{{ err }}</div>
+        }
+      </div>
+
+      <div class="field span-2">
+        <label for="contact-message">{{ i18n.t().f_message }}</label>
+        <textarea
+          id="contact-message"
+          name="message"
+          rows="4"
+          [maxlength]="maxLengths.message"
+          [(ngModel)]="message"
+          (input)="clearError('message')"
+          [class.error]="errors().message"
+          [attr.aria-invalid]="errors().message ? 'true' : null"
+        ></textarea>
+        @if (errors().message; as err) {
+          <div class="error-msg">{{ err }}</div>
+        }
+      </div>
+
+      <!--
+        Honeypot: off-screen and hidden from assistive tech, so only bots fill it.
+        Never remove tabindex="-1" or aria-hidden — a keyboard user must not land here.
+      -->
+      <div class="honeypot" aria-hidden="true">
+        <label for="contact-website">Website</label>
+        <input
+          id="contact-website"
+          type="text"
+          name="website"
+          tabindex="-1"
+          autocomplete="off"
+          [(ngModel)]="website"
+        />
+      </div>
+
+      <div class="span-2">
+        <button type="submit" class="submit focus-ring" [disabled]="sending()">
+          @if (sending()) {
+            <span class="spinner" aria-hidden="true"></span>
+          }
+          {{ submitLabel() }}
+        </button>
+      </div>
+    </form>
+    <div class="direct">
+      <div class="direct-kicker">{{ i18n.t().contact_direct }}</div>
+      <div class="mono email">info&#64;checktodata.com</div>
+      <div class="note">{{ i18n.t().contact_note }}</div>
+    </div>
+  </div>
+</section>

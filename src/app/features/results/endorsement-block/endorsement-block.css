@@ -1,0 +1,61 @@
+.verdict {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid #e4e4e7;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+.left { display: flex; align-items: center; gap: 10px; }
+.icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.labels { display: flex; align-items: baseline; gap: 8px; }
+.kicker {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #a1a1aa;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.value { font-size: 14px; font-weight: 600; color: #09090b; }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  flex: none;
+}
+
+.cotejo {
+  padding: 10px 14px;
+  border: 1px solid #e4e4e7;
+  border-radius: 6px;
+  background: #fcfcfd;
+}
+.cotejo-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: #a1a1aa; }
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f4f4f5;
+  color: #52525b;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: auto;
+}
+.cotejo-note { font-size: 12px; color: #52525b; line-height: 1.5; }

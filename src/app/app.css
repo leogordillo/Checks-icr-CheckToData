@@ -1,0 +1,17 @@
+.shell { min-height: 100vh; background: #fcfcfd; }
+.main { max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; }
+
+.footer { border-top: 1px solid #e4e4e7; background: #ffffff; height: 56px; display: flex; align-items: center; }
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.footer-left { display: flex; align-items: center; gap: 14px; font-size: 12px; color: #52525b; }
+.brand { font-weight: 600; color: #09090b; }
+.footer-right { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: #52525b; }
+.footer-right .dot { width: 6px; height: 6px; background: #0e9c9c; border-radius: 50%; }

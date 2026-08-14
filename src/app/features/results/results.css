@@ -1,0 +1,217 @@
+.results {
+  margin-top: 32px;
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+}
+.results.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+.panel {
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 16px 18px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-track { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: #f4f4f5; overflow: hidden; }
+.progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 40%;
+  background: linear-gradient(90deg, #6d42d9, #0e9c9c);
+  animation: indet 1.2s ease-in-out infinite;
+}
+
+.processing-status { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 2px solid #e4e4e7;
+  border-top-color: #6d42d9;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex: none;
+}
+.processing-text { font-size: 12.5px; font-weight: 500; color: #09090b; flex: 1; }
+.processing-elapsed { font-size: 12px; color: #a1a1aa; }
+
+.head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.kicker {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #a1a1aa;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 2px;
+}
+h2 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+
+.head-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid #e4e4e7;
+  border-radius: 999px;
+  background: #fcfcfd;
+  font-size: 11.5px;
+}
+.chip .dot { width: 6px; height: 6px; border-radius: 50%; }
+.chip-label { color: #52525b; }
+.chip-value { font-weight: 600; color: #09090b; }
+.divider { width: 1px; height: 20px; background: #e4e4e7; margin: 0 2px; }
+.btn {
+  font-size: 12px;
+  font-weight: 500;
+  color: #09090b;
+  padding: 6px 10px;
+  border: 1px solid #e4e4e7;
+  border-radius: 5px;
+  background: #ffffff;
+}
+
+.notice-box {
+  border: 1px solid #b4530933;
+  background: #b453090a;
+  border-radius: 6px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.notice-body { flex: 1; font-size: 12.5px; }
+.notice-title { font-weight: 600; margin-bottom: 2px; color: #09090b; }
+.notice-detail { color: #52525b; }
+.notice-btn {
+  font-size: 12px;
+  font-weight: 500;
+  color: #92400e;
+  padding: 6px 12px;
+  border: 1px solid #b4530933;
+  border-radius: 5px;
+  background: #ffffff;
+  flex: none;
+  white-space: nowrap;
+}
+
+.error-box {
+  border: 1px solid #dc262633;
+  background: #dc26260a;
+  border-radius: 6px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.error-body { flex: 1; font-size: 13px; }
+.error-title { font-weight: 600; margin-bottom: 2px; }
+.error-detail { color: #52525b; }
+.retry-btn {
+  font-size: 12px;
+  font-weight: 500;
+  color: #dc2626;
+  padding: 6px 12px;
+  border: 1px solid #dc262633;
+  border-radius: 5px;
+}
+
+.tabs {
+  display: inline-flex;
+  padding: 2px;
+  background: #fcfcfd;
+  border: 1px solid #e4e4e7;
+  border-radius: 6px;
+  margin-bottom: 18px;
+}
+.tab { padding: 6px 14px; font-size: 12.5px; font-weight: 500; border-radius: 4px; color: #52525b; }
+.tab.active { background: #ffffff; color: #6d42d9; box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06); }
+
+.results-table { width: 100%; border-collapse: collapse; }
+.results-table thead th {
+  text-align: left;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #a1a1aa;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0 12px 8px;
+}
+.results-table thead th.conf-col { width: 220px; }
+.results-table tbody tr { border-top: 1px solid #f4f4f5; }
+.results-table tbody tr.low { background: #fde7e708; }
+.results-table tbody td { padding: 12px; vertical-align: top; }
+.field-label { font-size: 13px; font-weight: 600; color: #09090b; white-space: nowrap; width: 1%; }
+.field-value .mono { font-size: 13px; color: #09090b; }
+.field-value .normalized { font-size: 11.5px; color: #52525b; margin-top: 2px; }
+
+.conf-col { width: 220px; }
+.conf-cell { display: flex; align-items: center; gap: 8px; }
+.conf-cell .dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+.bar-track { flex: 1; height: 4px; background: #f4f4f5; border-radius: 2px; overflow: hidden; }
+.bar-fill { display: block; height: 100%; }
+.conf-pct { font-size: 12px; font-weight: 600; width: 38px; text-align: right; flex: none; }
+
+/* CAR/LAR verdict: a derived control, so it reads as a distinct band rather than as
+   one more extracted field. */
+.results-table tbody tr.verdict-row { background: #fafafa; }
+.results-table tbody tr.verdict-row.mismatch { background: #fdf3f3; }
+
+.verdict-desc {
+  margin-top: 5px;
+  font-size: 11.5px;
+  color: #a1a1aa;
+  line-height: 1.5;
+}
+
+.verdict-values { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.verdict-part { display: inline-flex; align-items: center; gap: 6px; }
+.verdict-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #a1a1aa;
+}
+.verdict-sep { color: #d4d4d8; }
+
+.verdict-note {
+  margin-top: 5px;
+  font-size: 11.5px;
+  color: #52525b;
+  line-height: 1.5;
+  max-width: 60ch;
+}
+
+.verdict-cell { justify-content: flex-end; }
+.verdict-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.verdict-icon { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+
+.results-table.skeleton tbody td { padding: 12px; }
+
+@media (max-width: 640px) {
+  .results-table thead { display: none; }
+  .results-table, .results-table tbody, .results-table tbody tr, .results-table tbody td { display: block; width: 100%; }
+  .results-table tbody tr { padding: 10px 0; }
+  .results-table tbody td { padding: 2px 0; }
+  .field-label { white-space: normal; }
+  .head-actions { width: 100%; }
+  .results-table tbody tr.verdict-row { padding: 10px 8px; border-radius: 6px; }
+  .verdict-cell { justify-content: flex-start; margin-top: 4px; }
+}
