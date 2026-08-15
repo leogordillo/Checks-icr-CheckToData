@@ -75,6 +75,19 @@
         <span class="processing-text">{{ i18n.t().processing_status }}</span>
         <span class="num mono processing-elapsed">{{ elapsedLabel() }}</span>
       </div>
+
+      @if (showWakingNotice()) {
+        <div class="notice-box waking">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="1.5">
+            <circle cx="12" cy="12" r="9"></circle>
+            <polyline points="12 7 12 12 15.5 14"></polyline>
+          </svg>
+          <div class="notice-body">
+            <div class="notice-title">{{ i18n.t().waking_title }}</div>
+            <div class="notice-detail">{{ i18n.t().waking_body }}</div>
+          </div>
+        </div>
+      }
       <table class="results-table skeleton">
         <tbody>
           @for (k of skeletonCards(); track k) {
