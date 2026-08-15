@@ -335,8 +335,16 @@ final class SmtpClient
 
         $scheme = $secure === 'ssl' ? 'ssl' : 'tcp';
 
-        error_clear_last();
-        $socket = @stream_socket_client(
+        // A rejected TLS handshake raises several warnings in cascade, and only the
+        // FIRST carries the OpenSSL reason — the last one is a generic "Unknown
+        // error". error_get_last() would return exactly the useless one, so collect
+        // them all instead of suppressing with @.
+        $warnings = [];
+        set_error_handler(static function (int $no, string $message) use (&$warnings): bool {
+            $warnings[] = $message;
+            return true; // handled: keep it out of the output
+        });
+        $socket = stream_socket_client(
             sprintf('%s://%s:%d', $scheme, $host, $port),
             $errno,
             $errstr,
@@ -344,14 +352,14 @@ final class SmtpClient
             STREAM_CLIENT_CONNECT,
             $context
         );
+        restore_error_handler();
 
         if ($socket === false) {
-            // An errno of 0 with an empty message means the failure happened above
-            // TCP — a missing ssl:// transport or a rejected TLS handshake. The real
-            // reason only exists in the warning that @ suppressed, so read it back.
-            $last = error_get_last();
-            $reason = $errstr !== '' ? $errstr : ($last['message'] ?? 'unknown error');
-            throw new SmtpException("connect failed to $scheme://$host:$port — $reason ($errno)");
+            $reason = $warnings !== [] ? implode(' | ', $warnings) : ($errstr ?: 'unknown error');
+            $hint = ($errno === 0 && $verifyCert)
+                ? " [errno 0 means the failure was above TCP; if it mentions the certificate, try 'verify_cert' => false]"
+                : '';
+            throw new SmtpException("connect failed to $scheme://$host:$port — $reason ($errno)$hint");
         }
 
         $this->socket = $socket;
@@ -401,15 +409,21 @@ final class SmtpClient
 
         if ($this->secure === 'tls') {
             $this->send('STARTTLS', 220);
-            error_clear_last();
-            $ok = @stream_socket_enable_crypto(
+            $warnings = [];
+            set_error_handler(static function (int $no, string $message) use (&$warnings): bool {
+                $warnings[] = $message;
+                return true;
+            });
+            $ok = stream_socket_enable_crypto(
                 $this->socket,
                 true,
                 STREAM_CRYPTO_METHOD_TLS_CLIENT
             );
+            restore_error_handler();
             if ($ok !== true) {
-                $last = error_get_last();
-                throw new SmtpException('STARTTLS failed: ' . ($last['message'] ?? 'unknown error'));
+                throw new SmtpException(
+                    'STARTTLS failed: ' . ($warnings !== [] ? implode(' | ', $warnings) : 'unknown error')
+                );
             }
             // The server forgets everything announced before the upgrade.
             $this->send('EHLO ' . $ehloDomain, 250);

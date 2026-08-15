@@ -181,9 +181,26 @@ detalle expone información interna del servidor.
 | `getaddrinfo failed` | No resuelve el host desde adentro del servidor | Probar `'host' => 'localhost'` |
 
 **Cómo leer el error.** Si trae un `errno` real (110, 111…) el problema es de red: puerto
-bloqueado o host inalcanzable. Si en cambio dice **`(0)` con mensaje vacío**, la falla fue
-por encima de TCP — falta el transporte `ssl://` o el handshake TLS fue rechazado. Ese es
-el caso donde `'verify_cert' => false` suele destrabar.
+bloqueado o host inalcanzable. Si en cambio dice **`(0)`**, la falla fue por encima de TCP
+— falta el transporte `ssl://` o el handshake TLS fue rechazado. Ese es el caso donde
+`'verify_cert' => false` suele destrabar.
+
+### `smtp-check.php`: el atajo
+
+En vez de ir probando combinaciones de a una, con `'debug' => true` podés abrir en el
+navegador:
+
+```
+https://checktodata.com/smtp-check.php
+```
+
+Prueba de un saque TCP a 465/587/25, un relay en `localhost`, y TLS con y sin validación
+de certificado; devuelve un `resumen` con qué conectó y qué no, más el saludo del servidor
+y todos los warnings de cada intento. De ahí se lee directamente qué combinación de
+`host`/`port`/`secure`/`verify_cert` poner en la configuración.
+
+No envía correo ni muestra la contraseña. **Borralo del servidor** (o dejá `debug` en
+`false`) cuando el envío funcione.
 
 Mientras configurás, `'rate_limit_register'` sube el tope de registros por hora y por IP,
 para no bloquearte a vos mismo probando.
