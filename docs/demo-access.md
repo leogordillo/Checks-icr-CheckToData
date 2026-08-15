@@ -126,9 +126,35 @@ si se cambian, actualizar los tres lugares.
 ## Protecciones
 
 Las mismas del formulario de contacto: validación doble (cliente y servidor), honeypot
-en el modal, rate limit por IP (5 registros/hora; 120 llamadas/hora a `use.php`),
-rechazo de saltos de línea en valores que terminan en cabeceras de mail. La clave nunca
-viaja en la respuesta HTTP del registro: solo por correo.
+en el modal, rechazo de saltos de línea en valores que terminan en cabeceras de mail,
+y consultas siempre preparadas contra SQLite. La clave nunca viaja en la respuesta HTTP
+del registro: solo por correo.
+
+### Límites de envío en `register.php`
+
+Es el único punto del sitio que manda correo a una dirección **elegida por quien llama**,
+así que es el candidato natural a convertirse en un cañón de spam. Tres límites, cada uno
+tapando un agujero que los otros dejan:
+
+| Límite | Valor | Qué frena |
+|---|---|---|
+| Por IP | 5/hora (`rate_limit_register`) | El abusador común |
+| Por dirección de correo | 2/hora | Que reenviar la clave a la misma víctima se use para bombardearla |
+| Global | 60/hora | Una botnet rotando IPs, que anula por completo el límite por IP |
+
+El de por-dirección importa especialmente porque el re-registro **reenvía la clave**: sin
+ese tope, repetir el email de un tercero era una forma de mail-bombing.
+
+`use.php` admite 120 llamadas/hora por IP (una ejecución consume hasta 3).
+
+### Lo que estos límites NO cubren
+
+**La API de inferencia no tiene autenticación.** CORS restringe a los navegadores, pero no
+es un control de acceso: `curl` no envía `Origin` ni respeta la política, así que cualquier
+script puede llamar a `/api/predict` directamente, saltándose el registro, los cupos y las
+métricas. El gate mide y ordena el uso legítimo desde la web; no impide el uso directo de
+la API. Cerrar eso requiere autenticación en el propio FastAPI (API key por cliente), no
+cambios en este sitio.
 
 ## Diagnóstico
 
