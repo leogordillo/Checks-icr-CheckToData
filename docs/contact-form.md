@@ -172,8 +172,20 @@ fallido devuelve el error SMTP real en el JSON (`detail`) y la interfaz lo muest
 depender de encontrar el error log del hosting. **Volvé a `false` cuando funcione:** el
 detalle expone información interna del servidor.
 
+> **Caso ya resuelto en este hosting: bloqueo geográfico.** El servidor de correo
+> externo (`a0161088.ferozo.com`) rechaza las conexiones desde Argentina/Sudamérica con
+> `550 5.7.1 Blacklisted`, en los tres puertos. En el 465 no se ve ese mensaje: aparece
+> como `SSL: Connection reset by peer`, porque el servidor corta durante el handshake.
+>
+> Por eso el envío usa el **relay local** (`localhost:25`, sin cifrado ni
+> autenticación): el correo no sale de la máquina para ser entregado, así que el bloqueo
+> no aplica. Si algún día se levanta la restricción, se puede volver al servidor externo
+> cambiando `host`/`port`/`secure`/`auth`.
+
 | El error dice | Causa | Solución |
 |---|---|---|
+| `550 5.7.1 Blacklisted` | El servidor de correo bloquea la región del hosting | Usar el relay local (ver recuadro) |
+| `SSL: Connection reset by peer` | Lo mismo, pero en el puerto con TLS implícito | Ídem |
 | `535` / `authentication failed` | La contraseña del archivo ya no es la del buzón | Actualizarla — es lo típico después de rotarla |
 | `certificate verify failed` / `unable to get local issuer` | PHP no puede validar el certificado del servidor de correo: el hosting no tiene un CA bundle usable, o el certificado no coincide con el host | `'verify_cert' => false` |
 | `connect failed … Connection refused` / `timed out` | El hosting bloquea la salida SMTP | Probar `'port' => 587, 'secure' => 'tls'`, o un relay local |

@@ -403,7 +403,8 @@ final class SmtpClient
         return $this->expect($expected);
     }
 
-    public function authenticate(string $username, string $password, string $ehloDomain): void
+    /** Greets the server and upgrades the channel when STARTTLS is configured. */
+    public function handshake(string $ehloDomain): void
     {
         $this->send('EHLO ' . $ehloDomain, 250);
 
@@ -428,7 +429,15 @@ final class SmtpClient
             // The server forgets everything announced before the upgrade.
             $this->send('EHLO ' . $ehloDomain, 250);
         }
+    }
 
+    /**
+     * Only for relays that require credentials. A local relay usually accepts mail
+     * from its own machine unauthenticated, and answering AUTH with a 502 there
+     * would abort a session that was otherwise fine.
+     */
+    public function authenticate(string $username, string $password): void
+    {
         $this->send('AUTH LOGIN', 334);
         $this->send(base64_encode($username), 334);
         // A 535 here is almost always a stale password in the config file.
@@ -476,7 +485,13 @@ function encode_header(string $value): string
  */
 function send_mail(array $config, string $toAddress, string $toName, string $subject, string $body): void
 {
-    foreach (['host', 'port', 'username', 'password', 'from'] as $key) {
+    // Credentials are only required when the relay actually asks for them.
+    $useAuth = !isset($config['auth']) || (bool) $config['auth'];
+    $required = $useAuth
+        ? ['host', 'port', 'username', 'password', 'from']
+        : ['host', 'port', 'from'];
+
+    foreach ($required as $key) {
         if (empty($config[$key])) {
             error_log("demo-common: mail config missing key '$key'");
             fail(500, 'server_misconfigured');
@@ -521,11 +536,10 @@ function send_mail(array $config, string $toAddress, string $toName, string $sub
             $secure,
             !isset($config['verify_cert']) || (bool) $config['verify_cert']
         );
-        $client->authenticate(
-            (string) $config['username'],
-            (string) $config['password'],
-            (string) ($_SERVER['HTTP_HOST'] ?? 'checktodata.com')
-        );
+        $client->handshake((string) ($_SERVER['HTTP_HOST'] ?? 'checktodata.com'));
+        if ($useAuth) {
+            $client->authenticate((string) $config['username'], (string) $config['password']);
+        }
         $client->sendMessage($fromAddress, $toAddress, $payload);
     } catch (Throwable $e) {
         error_log('demo-common: send failed: ' . $e->getMessage());

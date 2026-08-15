@@ -22,9 +22,20 @@
 declare(strict_types=1);
 
 return [
-    // SMTP server — implicit TLS on 465, per the Donweb mailbox settings.
-    'host'     => 'a0161088.ferozo.com',
-    'port'     => 465,
+    /**
+     * SMTP relay.
+     *
+     * On this hosting the EXTERNAL mail server (a0161088.ferozo.com) refuses
+     * connections coming from Argentina/South America with "550 5.7.1
+     * Blacklisted", so the local relay is what actually works:
+     *
+     *     'host' => 'localhost', 'port' => 25, 'secure' => 'none', 'auth' => false
+     *
+     * Point it at the external server only if that block is lifted. Run
+     * smtp-check.php (with debug on) to see which combinations connect.
+     */
+    'host'     => 'localhost',
+    'port'     => 25,
 
     /**
      * How the connection is encrypted:
@@ -35,10 +46,18 @@ return [
      * If the host blocks outbound SMTP to the outside world, a local relay
      * ('host' => 'localhost', 'port' => 25, 'secure' => 'none') often works.
      */
-    'secure'   => 'ssl',
+    'secure'   => 'none',
 
     /**
-     * Certificate validation for the SMTP connection.
+     * Whether the relay requires credentials. A local relay normally accepts mail
+     * from its own machine unauthenticated; answering AUTH there aborts an
+     * otherwise fine session. Set true when pointing at an authenticated server.
+     */
+    'auth'     => false,
+
+    /**
+     * Certificate validation for the SMTP connection. Irrelevant when 'secure' is
+     * 'none'.
      *
      * Shared hosting frequently ships PHP without a usable CA bundle, or presents a
      * certificate that does not match the mail host name. Either case fails the
@@ -47,8 +66,9 @@ return [
      */
     'verify_cert' => true,
 
-    // Mailbox credentials. A 535 in the logs means this no longer matches the
-    // password the mailbox actually has — the usual cause after rotating it.
+    // Mailbox credentials, used only when 'auth' is true. A 535 in the logs means
+    // this no longer matches the password the mailbox actually has — the usual
+    // cause after rotating it.
     'username' => 'info@checktodata.com',
     'password' => 'PUT-THE-MAILBOX-PASSWORD-HERE',
 
