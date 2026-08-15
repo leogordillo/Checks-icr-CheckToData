@@ -8,11 +8,13 @@
  *
  * Open it in a browser: https://checktodata.com/smtp-check.php
  *
- * Gated behind 'debug' => true in the credentials file, because it reveals host
- * names, ports and PHP internals. It never prints the password, and it never
- * sends mail — it only opens and closes sockets.
+ * NOT DEPLOYED BY DEFAULT. It lives in deploy/ rather than public/ precisely so
+ * that it never ships with a build: upload it next to the other .php files only
+ * while diagnosing, and delete it from the server afterwards.
  *
- * DELETE THIS FILE (or set debug => false) once mail is working.
+ * It also requires 'debug' => true in the credentials file, because it reveals
+ * host names, ports and PHP internals. It never prints the password and never
+ * sends mail — it only opens and closes sockets.
  */
 
 declare(strict_types=1);

@@ -131,8 +131,32 @@
   font-size: 11.5px;
   color: #a1a1aa;
 }
-.remaining { font-size: 11.5px; color: #52525b; }
-.remaining .mono { font-weight: 600; color: #6d42d9; }
+/* Reads as a quota badge rather than a caption: enough weight to be noticed at a
+   glance, not enough to compete with the primary action. */
+.remaining {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid #e9e3fb;
+  border-radius: 999px;
+  background: #f8f6fe;
+  font-size: 11.5px;
+  color: #6b6580;
+}
+.remaining svg { color: #8b6fd6; flex: none; }
+.remaining-label { font-weight: 500; }
+.remaining-count {
+  font-weight: 700;
+  font-size: 12.5px;
+  color: #6d42d9;
+  letter-spacing: -0.01em;
+}
+
+/* Running out is worth surfacing before the run that fails. */
+.remaining.low { border-color: #f5d9b0; background: #fef8ee; color: #7a6440; }
+.remaining.low svg { color: #d97706; }
+.remaining.low .remaining-count { color: #b45309; }
 
 @media (max-width: 720px) {
   .slots { grid-template-columns: 1fr; }

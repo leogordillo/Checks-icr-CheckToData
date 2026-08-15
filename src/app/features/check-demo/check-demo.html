@@ -74,9 +74,15 @@
         {{ i18n.t().demo_privacy }}
       </div>
       @if (access.key()) {
-        <div class="remaining">
-          {{ i18n.t().gate_remaining }}:
-          <span class="num mono">{{ access.unlimited() ? i18n.t().gate_unlimited : (access.remaining() ?? '—') }}</span>
+        <div class="remaining" [class.low]="runsLow()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"></circle>
+            <polyline points="12 7 12 12 15.5 14"></polyline>
+          </svg>
+          <span class="remaining-label">{{ i18n.t().gate_remaining }}</span>
+          <span class="num mono remaining-count">
+            {{ access.unlimited() ? i18n.t().gate_unlimited : (access.remaining() ?? '—') }}
+          </span>
         </div>
       }
     </div>

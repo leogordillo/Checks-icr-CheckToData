@@ -66,6 +66,25 @@ if (rate_limit_exceeded('register', client_ip(), $registerLimit)) {
     fail(429, 'rate_limited');
 }
 
+/**
+ * This endpoint mails an address chosen by whoever calls it, so it is the one
+ * piece of the site that could be turned into a spam cannon. Three limits, each
+ * covering a hole the others leave:
+ *
+ *  - per IP (above)     — the ordinary abuser
+ *  - per RECIPIENT      — stops repeat submissions of a victim's address from
+ *                         mail-bombing them, which the per-IP limit allows and
+ *                         which re-registration made worse by re-sending the key
+ *  - global             — a botnet rotating IPs defeats per-IP limiting entirely;
+ *                         this caps the damage to the domain's mail reputation
+ */
+if (rate_limit_exceeded('register-email', strtolower($email), 2)) {
+    fail(429, 'rate_limited');
+}
+if (rate_limit_exceeded('register-global', 'all', 60)) {
+    fail(429, 'rate_limited');
+}
+
 // ── Create or refresh the registration ──────────────────────────────────────────
 
 ['config' => $config, 'dir' => $configDir] = load_demo_config();

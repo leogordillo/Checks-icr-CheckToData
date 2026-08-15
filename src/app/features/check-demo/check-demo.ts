@@ -30,6 +30,15 @@ export class CheckDemoComponent {
   protected readonly icrApi = inject(IcrApiService);
   private readonly toasts = inject(ToastService);
 
+  /** Below this the counter turns amber, so the limit is felt before it is hit. */
+  private static readonly RUNS_LOW_THRESHOLD = 5;
+
+  protected readonly runsLow = computed(() => {
+    if (this.access.unlimited()) return false;
+    const left = this.access.remaining();
+    return left !== null && left <= CheckDemoComponent.RUNS_LOW_THRESHOLD;
+  });
+
   protected readonly gateOpen = signal(false);
   protected readonly gateMode = signal<GateMode>('register');
   protected readonly limitReason = signal<'expired' | 'exhausted'>('exhausted');
