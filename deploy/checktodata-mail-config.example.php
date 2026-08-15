@@ -37,6 +37,16 @@ return [
      */
     'secure'   => 'ssl',
 
+    /**
+     * Certificate validation for the SMTP connection.
+     *
+     * Shared hosting frequently ships PHP without a usable CA bundle, or presents a
+     * certificate that does not match the mail host name. Either case fails the
+     * handshake with an empty error and errno 0. Setting this to false skips the
+     * validation; the connection stays encrypted, it is just not authenticated.
+     */
+    'verify_cert' => true,
+
     // Mailbox credentials. A 535 in the logs means this no longer matches the
     // password the mailbox actually has — the usual cause after rotating it.
     'username' => 'info@checktodata.com',
@@ -51,6 +61,10 @@ return [
      * submits the form.
      */
     'debug'    => false,
+
+    // Registros por hora y por IP admitidos por register.php. Subilo mientras
+    // configurás el envío, para no bloquearte a vos mismo probando.
+    'rate_limit_register' => 5,
 
     // Envelope sender. Must stay on your own domain so SPF/DKIM pass — the visitor's
     // address goes into Reply-To instead, which contact.php handles for you.

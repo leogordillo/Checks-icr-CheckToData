@@ -321,23 +321,34 @@ final class SmtpClient
     private string $secure;
 
     /**
-     * @param string $secure 'ssl'  → implicit TLS, whole session encrypted (port 465)
-     *                       'tls'  → plain connect, upgraded with STARTTLS (port 587)
-     *                       'none' → no encryption (only sane for localhost relays)
+     * @param string $secure     'ssl'  → implicit TLS, whole session encrypted (port 465)
+     *                           'tls'  → plain connect, upgraded with STARTTLS (port 587)
+     *                           'none' → no encryption (only sane for localhost relays)
+     * @param bool   $verifyCert Set false when the mail server presents a certificate
+     *                           PHP cannot validate — common on shared hosting, where
+     *                           the CA bundle is missing or the cert does not match the
+     *                           host name. Traffic stays encrypted either way.
      */
-    public function __construct(string $host, int $port, string $secure = 'ssl', int $timeout = 20)
-    {
+    public function __construct(
+        string $host,
+        int $port,
+        string $secure = 'ssl',
+        bool $verifyCert = true,
+        int $timeout = 20
+    ) {
         $this->secure = $secure;
 
         $context = stream_context_create([
             'ssl' => [
-                'verify_peer'       => true,
-                'verify_peer_name'  => true,
-                'allow_self_signed' => false,
+                'verify_peer'       => $verifyCert,
+                'verify_peer_name'  => $verifyCert,
+                'allow_self_signed' => !$verifyCert,
             ],
         ]);
 
         $scheme = $secure === 'ssl' ? 'ssl' : 'tcp';
+
+        error_clear_last();
         $socket = @stream_socket_client(
             sprintf('%s://%s:%d', $scheme, $host, $port),
             $errno,
@@ -348,7 +359,12 @@ final class SmtpClient
         );
 
         if ($socket === false) {
-            throw new SmtpException("connect failed to $scheme://$host:$port — $errstr ($errno)");
+            // An errno of 0 with an empty message means the failure happened above
+            // TCP — a missing ssl:// transport or a rejected TLS handshake. The real
+            // reason only exists in the warning that @ suppressed, so read it back.
+            $last = error_get_last();
+            $reason = $errstr !== '' ? $errstr : ($last['message'] ?? 'unknown error');
+            throw new SmtpException("connect failed to $scheme://$host:$port — $reason ($errno)");
         }
 
         $this->socket = $socket;
@@ -401,9 +417,11 @@ final class SmtpClient
 
         if ($this->secure === 'tls') {
             $this->send('STARTTLS', 220);
+            error_clear_last();
             $ok = @stream_socket_enable_crypto($this->socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
             if ($ok !== true) {
-                throw new SmtpException('STARTTLS negotiation failed');
+                $last = error_get_last();
+                throw new SmtpException('STARTTLS failed: ' . ($last['message'] ?? 'unknown error'));
             }
             // The server forgets everything announced before the upgrade.
             $this->send('EHLO ' . $ehloDomain, 250);
@@ -447,7 +465,8 @@ try {
     $client = new SmtpClient(
         (string) $config['host'],
         (int) $config['port'],
-        isset($config['secure']) ? (string) $config['secure'] : 'ssl'
+        isset($config['secure']) ? (string) $config['secure'] : 'ssl',
+        !isset($config['verify_cert']) || (bool) $config['verify_cert']
     );
     $client->authenticate(
         (string) $config['username'],

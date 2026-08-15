@@ -50,7 +50,19 @@ if ($errors !== []) {
     respond(422, ['ok' => false, 'error' => 'validation_failed', 'fields' => $errors]);
 }
 
-if (rate_limit_exceeded('register', client_ip(), 5)) {
+// Configurable so the limit can be raised while setting SMTP up, without a redeploy.
+$registerLimit = 5;
+foreach (DEMO_CONFIG_CANDIDATES as $candidate) {
+    if (is_readable($candidate)) {
+        $probe = @require $candidate;
+        if (is_array($probe) && isset($probe['rate_limit_register'])) {
+            $registerLimit = max(1, (int) $probe['rate_limit_register']);
+        }
+        break;
+    }
+}
+
+if (rate_limit_exceeded('register', client_ip(), $registerLimit)) {
     fail(429, 'rate_limited');
 }
 

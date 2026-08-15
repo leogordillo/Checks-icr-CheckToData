@@ -175,9 +175,18 @@ detalle expone información interna del servidor.
 | El error dice | Causa | Solución |
 |---|---|---|
 | `535` / `authentication failed` | La contraseña del archivo ya no es la del buzón | Actualizarla — es lo típico después de rotarla |
+| `certificate verify failed` / `unable to get local issuer` | PHP no puede validar el certificado del servidor de correo: el hosting no tiene un CA bundle usable, o el certificado no coincide con el host | `'verify_cert' => false` |
 | `connect failed … Connection refused` / `timed out` | El hosting bloquea la salida SMTP | Probar `'port' => 587, 'secure' => 'tls'`, o un relay local |
 | `Unable to find the socket transport "ssl"` | Falta OpenSSL en PHP | Habilitar la extensión en el panel |
 | `getaddrinfo failed` | No resuelve el host desde adentro del servidor | Probar `'host' => 'localhost'` |
+
+**Cómo leer el error.** Si trae un `errno` real (110, 111…) el problema es de red: puerto
+bloqueado o host inalcanzable. Si en cambio dice **`(0)` con mensaje vacío**, la falla fue
+por encima de TCP — falta el transporte `ssl://` o el handshake TLS fue rechazado. Ese es
+el caso donde `'verify_cert' => false` suele destrabar.
+
+Mientras configurás, `'rate_limit_register'` sube el tope de registros por hora y por IP,
+para no bloquearte a vos mismo probando.
 
 El envío soporta las tres modalidades vía `'secure'`: `ssl` (465, TLS implícito), `tls`
 (587, STARTTLS) y `none` (relay local sin cifrado).
