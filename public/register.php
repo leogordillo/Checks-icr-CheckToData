@@ -63,6 +63,11 @@ $now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 $nowStr = $now->format('Y-m-d H:i:s');
 $expiresStr = $now->modify('+' . DEMO_KEY_DAYS . ' days')->format('Y-m-d H:i:s');
 
+// Tracked so a failed send can undo a brand-new row: otherwise a bad SMTP
+// config leaves registrations with a key nobody ever received, and the visitor
+// cannot re-register because the email is already taken.
+$createdNow = false;
+
 $db->beginTransaction();
 try {
     $stmt = $db->prepare('SELECT * FROM users WHERE email = :email');
@@ -100,6 +105,7 @@ try {
             ':expires' => $expiresStr,
             ':ip'      => client_ip(),
         ]);
+        $createdNow = true;
     } else {
         $accessKey = (string) $user['access_key'];
         $expired = $user['expires_at'] !== null && (string) $user['expires_at'] < $nowStr;
@@ -122,6 +128,26 @@ try {
 }
 
 // ── Send the key ────────────────────────────────────────────────────────────────
+
+/**
+ * send_mail() ends the request itself when delivery fails, so the undo runs from
+ * a shutdown hook rather than a catch block. Only rows created by THIS request
+ * are removed — an existing registration keeps its key and quota untouched.
+ */
+$mailSent = false;
+if ($createdNow) {
+    register_shutdown_function(static function () use (&$mailSent, $db, $email): void {
+        if ($mailSent) {
+            return;
+        }
+        try {
+            $undo = $db->prepare('DELETE FROM users WHERE email = :email');
+            $undo->execute([':email' => $email]);
+        } catch (Throwable $e) {
+            error_log('register.php: could not undo unsent registration: ' . $e->getMessage());
+        }
+    });
+}
 
 $quota = DEMO_DEFAULT_QUOTA;
 $days = DEMO_KEY_DAYS;
@@ -165,5 +191,6 @@ To extend your limit, or for any question: info@checktodata.com
 TXT;
 
 send_mail($config, $email, $name, 'Tu clave de acceso — CheckToData', $body);
+$mailSent = true;
 
 respond(200, ['ok' => true]);

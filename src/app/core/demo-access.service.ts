@@ -4,7 +4,13 @@ import { Observable } from 'rxjs';
 import { PredictResponse } from './models';
 
 /** Server-side error codes the gate reacts to. */
-export type AccessError = 'invalid_key' | 'expired' | 'exhausted' | 'rate_limited' | 'unknown';
+export type AccessError =
+  | 'invalid_key'
+  | 'expired'
+  | 'exhausted'
+  | 'rate_limited'
+  | 'send_failed'
+  | 'unknown';
 
 export interface AccessBalance {
   ok: boolean;
@@ -101,10 +107,30 @@ export class DemoAccessService {
   static errorCode(err: unknown): AccessError {
     if (err instanceof HttpErrorResponse) {
       const code = (err.error as { error?: string } | null)?.error;
-      if (code === 'invalid_key' || code === 'expired' || code === 'exhausted') return code;
+      if (
+        code === 'invalid_key' ||
+        code === 'expired' ||
+        code === 'exhausted' ||
+        code === 'send_failed'
+      ) {
+        return code;
+      }
       if (err.status === 429) return 'rate_limited';
     }
     return 'unknown';
+  }
+
+  /**
+   * Technical cause the server attaches only when its config has debug enabled.
+   * Surfaced verbatim so a misconfigured mailbox is diagnosable from the browser
+   * instead of requiring access to the hosting error log.
+   */
+  static errorDetail(err: unknown): string | null {
+    if (err instanceof HttpErrorResponse) {
+      const detail = (err.error as { detail?: string } | null)?.detail;
+      if (typeof detail === 'string' && detail !== '') return detail;
+    }
+    return null;
   }
 
   /**

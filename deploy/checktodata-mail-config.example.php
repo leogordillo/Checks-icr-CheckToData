@@ -26,9 +26,31 @@ return [
     'host'     => 'a0161088.ferozo.com',
     'port'     => 465,
 
-    // Mailbox credentials.
+    /**
+     * How the connection is encrypted:
+     *   'ssl'  → implicit TLS, encrypted from the start   (port 465, the default)
+     *   'tls'  → plain connect upgraded via STARTTLS      (port 587)
+     *   'none' → no encryption; only sane for a localhost relay
+     *
+     * If the host blocks outbound SMTP to the outside world, a local relay
+     * ('host' => 'localhost', 'port' => 25, 'secure' => 'none') often works.
+     */
+    'secure'   => 'ssl',
+
+    // Mailbox credentials. A 535 in the logs means this no longer matches the
+    // password the mailbox actually has — the usual cause after rotating it.
     'username' => 'info@checktodata.com',
     'password' => 'PUT-THE-MAILBOX-PASSWORD-HERE',
+
+    /**
+     * Diagnostics. With true, a failed send returns the technical SMTP error in
+     * the JSON response, so the cause is visible from the browser instead of
+     * having to dig through the hosting error log.
+     *
+     * Turn it OFF once things work: it exposes server internals to anyone who
+     * submits the form.
+     */
+    'debug'    => false,
 
     // Envelope sender. Must stay on your own domain so SPF/DKIM pass — the visitor's
     // address goes into Reply-To instead, which contact.php handles for you.

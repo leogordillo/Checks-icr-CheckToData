@@ -42,6 +42,16 @@ const DEMO_DB_FILENAME = 'checktodata-demo.sqlite';
 const DEMO_DEFAULT_QUOTA = 20;
 const DEMO_KEY_DAYS = 30;
 
+/**
+ * Status returned when the mail could not be sent.
+ *
+ * Deliberately a 4xx and not a 5xx: Cloudflare sits in front of this site and
+ * replaces origin 5xx responses with its own branded error page, swallowing the
+ * JSON body — which is exactly the information needed to diagnose a failure.
+ * 4xx responses pass through untouched.
+ */
+const MAIL_FAILED_STATUS = 424; // Failed Dependency
+
 // ── JSON helpers ────────────────────────────────────────────────────────────────
 
 header('Content-Type: application/json; charset=utf-8');
@@ -56,9 +66,40 @@ function respond(int $status, array $payload): void
     exit;
 }
 
-function fail(int $status, string $code): void
+/**
+ * @param string|null $detail Technical cause. Only reaches the browser when the
+ *                            config sets 'debug' => true; otherwise it is dropped,
+ *                            since server internals must not leak by default.
+ */
+function fail(int $status, string $code, ?string $detail = null): void
 {
-    respond($status, ['ok' => false, 'error' => $code]);
+    $payload = ['ok' => false, 'error' => $code];
+    if ($detail !== null && debug_enabled()) {
+        $payload['detail'] = $detail;
+    }
+    respond($status, $payload);
+}
+
+/**
+ * Reads the optional 'debug' flag from the credentials file. Cached because
+ * fail() may run before or after the config has been loaded, and a missing or
+ * unreadable config must never itself raise an error here.
+ */
+function debug_enabled(): bool
+{
+    static $cached = null;
+    if ($cached !== null) {
+        return $cached;
+    }
+    $cached = false;
+    foreach (DEMO_CONFIG_CANDIDATES as $candidate) {
+        if (is_readable($candidate)) {
+            $config = @require $candidate;
+            $cached = is_array($config) && !empty($config['debug']);
+            break;
+        }
+    }
+    return $cached;
 }
 
 function require_post(): void
@@ -264,8 +305,17 @@ final class SmtpClient
     /** @var resource */
     private $socket;
 
-    public function __construct(string $host, int $port, int $timeout = 20)
+    private string $secure;
+
+    /**
+     * @param string $secure 'ssl'  → implicit TLS, the whole session encrypted (port 465)
+     *                       'tls'  → plain connect, upgraded with STARTTLS (port 587)
+     *                       'none' → no encryption (only sane for localhost relays)
+     */
+    public function __construct(string $host, int $port, string $secure = 'ssl', int $timeout = 20)
     {
+        $this->secure = $secure;
+
         $context = stream_context_create([
             'ssl' => [
                 'verify_peer'       => true,
@@ -274,9 +324,9 @@ final class SmtpClient
             ],
         ]);
 
-        // Port 465 is implicit TLS: the connection is encrypted before the greeting.
+        $scheme = $secure === 'ssl' ? 'ssl' : 'tcp';
         $socket = @stream_socket_client(
-            sprintf('ssl://%s:%d', $host, $port),
+            sprintf('%s://%s:%d', $scheme, $host, $port),
             $errno,
             $errstr,
             $timeout,
@@ -285,7 +335,7 @@ final class SmtpClient
         );
 
         if ($socket === false) {
-            throw new SmtpException("connect failed: $errstr ($errno)");
+            throw new SmtpException("connect failed to $scheme://$host:$port — $errstr ($errno)");
         }
 
         $this->socket = $socket;
@@ -332,8 +382,24 @@ final class SmtpClient
     public function authenticate(string $username, string $password, string $ehloDomain): void
     {
         $this->send('EHLO ' . $ehloDomain, 250);
+
+        if ($this->secure === 'tls') {
+            $this->send('STARTTLS', 220);
+            $ok = @stream_socket_enable_crypto(
+                $this->socket,
+                true,
+                STREAM_CRYPTO_METHOD_TLS_CLIENT
+            );
+            if ($ok !== true) {
+                throw new SmtpException('STARTTLS negotiation failed');
+            }
+            // The server forgets everything announced before the upgrade.
+            $this->send('EHLO ' . $ehloDomain, 250);
+        }
+
         $this->send('AUTH LOGIN', 334);
         $this->send(base64_encode($username), 334);
+        // A 535 here is almost always a stale password in the config file.
         $this->send(base64_encode($password), 235);
     }
 
@@ -410,9 +476,18 @@ function send_mail(array $config, string $toAddress, string $toName, string $sub
     $encodedBody = rtrim(chunk_split(base64_encode($body), 76, "\r\n"));
     $payload = implode("\r\n", $headers) . "\r\n\r\n" . $encodedBody;
 
+    // 'secure' lets the mailbox be reached over implicit TLS (465), STARTTLS (587)
+    // or plain (a localhost relay) without touching code — useful when a host
+    // blocks outbound SMTP to the outside world but allows its own relay.
+    $secure = isset($config['secure']) ? (string) $config['secure'] : 'ssl';
+
     $client = null;
     try {
-        $client = new SmtpClient((string) $config['host'], (int) $config['port']);
+        $client = new SmtpClient(
+            (string) $config['host'],
+            (int) $config['port'],
+            $secure
+        );
         $client->authenticate(
             (string) $config['username'],
             (string) $config['password'],
@@ -421,7 +496,7 @@ function send_mail(array $config, string $toAddress, string $toName, string $sub
         $client->sendMessage($fromAddress, $toAddress, $payload);
     } catch (Throwable $e) {
         error_log('demo-common: send failed: ' . $e->getMessage());
-        fail(502, 'send_failed');
+        fail(MAIL_FAILED_STATUS, 'send_failed', $e->getMessage());
     } finally {
         if ($client !== null) {
             $client->close();

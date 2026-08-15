@@ -28,15 +28,29 @@ Este archivo va **un nivel arriba** de la carpeta que sirve el sitio:
 
 ```
 /home/tuusuario/
-├── checktodata-mail-config.php   ← ACÁ (no accesible por HTTP)
+├── checktodata-mail-config.php   ← SOLO este archivo va acá (no accesible por HTTP)
+├── checktodata-demo.sqlite       ← se crea sola, también fuera del web root
 └── public_html/                  ← el web root
     ├── index.html
-    ├── contact.php
+    ├── contact.php               ← los .php van ACÁ ADENTRO
+    ├── register.php
+    ├── use.php
+    ├── demo-common.php
     └── main-XXXXXXXX.js
 ```
 
 En FileZilla: parate en la carpeta donde ves `index.html`, subí un nivel con `..`, y
-soltá el archivo ahí.
+soltá **el archivo de credenciales** ahí.
+
+> **Los `.php` del sitio NO se mueven.** Sólo el archivo de credenciales y la base de
+> datos viven fuera del web root. `contact.php`, `register.php`, `use.php` y
+> `demo-common.php` son endpoints que el navegador invoca por URL: si los sacás del web
+> root dejan de existir para el mundo y toda llamada responde `404 File not found.`
+>
+> La separación es entre **código** (público, tiene que ser alcanzable) y **secretos**
+> (nunca alcanzables). `demo-common.php` puede estar en el web root sin riesgo: no
+> contiene credenciales — las lee del archivo de afuera — y responde 404 si se lo pide
+> directamente.
 
 `contact.php` lo busca solo, uno y dos niveles hacia arriba, así que con esa ubicación
 funciona sin tocar código.
@@ -144,11 +158,33 @@ Donweb.
 
 | Respuesta | Significado | Qué mirar |
 |---|---|---|
+| `404 File not found.` | El `.php` no está en el web root | Moverlo junto a `index.html` (ver el árbol de más arriba) |
 | `server_misconfigured` | No encontró el archivo de credenciales, o le falta una clave | Que esté subido y un nivel arriba del web root |
-| `send_failed` | El SMTP rechazó la conexión, el login o el envío | Error log: suele ser contraseña incorrecta o el puerto 465 bloqueado |
+| `send_failed` | El SMTP rechazó la conexión, el login o el envío | Ver **Diagnosticar un fallo de envío** abajo |
 | `rate_limited` | Se superaron los 5 envíos por hora desde esa IP | Esperar, o subir `RATE_LIMIT_PER_HOUR` |
 | `validation_failed` | Datos inválidos según el servidor | El campo puntual viene en `fields` |
 | Devuelve el código PHP como texto | PHP no está habilitado en el hosting | Activarlo en el panel de Donweb |
+
+### Diagnosticar un fallo de envío
+
+Poné `'debug' => true` en el archivo de credenciales del servidor. Con eso, un envío
+fallido devuelve el error SMTP real en el JSON (`detail`) y la interfaz lo muestra, sin
+depender de encontrar el error log del hosting. **Volvé a `false` cuando funcione:** el
+detalle expone información interna del servidor.
+
+| El error dice | Causa | Solución |
+|---|---|---|
+| `535` / `authentication failed` | La contraseña del archivo ya no es la del buzón | Actualizarla — es lo típico después de rotarla |
+| `connect failed … Connection refused` / `timed out` | El hosting bloquea la salida SMTP | Probar `'port' => 587, 'secure' => 'tls'`, o un relay local |
+| `Unable to find the socket transport "ssl"` | Falta OpenSSL en PHP | Habilitar la extensión en el panel |
+| `getaddrinfo failed` | No resuelve el host desde adentro del servidor | Probar `'host' => 'localhost'` |
+
+El envío soporta las tres modalidades vía `'secure'`: `ssl` (465, TLS implícito), `tls`
+(587, STARTTLS) y `none` (relay local sin cifrado).
+
+**Nota sobre códigos de estado.** Un fallo de envío responde **424**, no 5xx, a propósito:
+el sitio está detrás de Cloudflare, que reemplaza cualquier 5xx del origen por su propia
+página de error y se traga el JSON con el motivo. Los 4xx pasan intactos.
 
 Si el formulario responde bien pero el mail no llega, revisá la carpeta de spam antes de
 tocar código, y de ahí saltá a la sección de entregabilidad de más arriba.

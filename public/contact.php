@@ -27,6 +27,13 @@ const MAIL_CONFIG_CANDIDATES = [
 /** Max accepted submissions per IP per hour. */
 const RATE_LIMIT_PER_HOUR = 5;
 
+/**
+ * Status returned when the mail could not be sent. Deliberately a 4xx: Cloudflare
+ * sits in front of this site and replaces origin 5xx responses with its own error
+ * page, swallowing the JSON body needed to diagnose the failure.
+ */
+const MAIL_FAILED_STATUS = 424; // Failed Dependency
+
 /** Field length caps, applied after trimming. */
 const MAX_LENGTHS = [
     'name'    => 120,
@@ -50,9 +57,35 @@ function respond(int $status, array $payload): void
     exit;
 }
 
-function fail(int $status, string $code): void
+/**
+ * @param string|null $detail Technical cause. Only reaches the browser when the
+ *                            config sets 'debug' => true; server internals must
+ *                            not leak by default.
+ */
+function fail(int $status, string $code, ?string $detail = null): void
 {
-    respond($status, ['ok' => false, 'error' => $code]);
+    $payload = ['ok' => false, 'error' => $code];
+    if ($detail !== null && contact_debug_enabled()) {
+        $payload['detail'] = $detail;
+    }
+    respond($status, $payload);
+}
+
+function contact_debug_enabled(): bool
+{
+    static $cached = null;
+    if ($cached !== null) {
+        return $cached;
+    }
+    $cached = false;
+    foreach (MAIL_CONFIG_CANDIDATES as $candidate) {
+        if (is_readable($candidate)) {
+            $config = @require $candidate;
+            $cached = is_array($config) && !empty($config['debug']);
+            break;
+        }
+    }
+    return $cached;
 }
 
 // ── Method guard ────────────────────────────────────────────────────────────────
@@ -285,8 +318,17 @@ final class SmtpClient
     /** @var resource */
     private $socket;
 
-    public function __construct(string $host, int $port, int $timeout = 20)
+    private string $secure;
+
+    /**
+     * @param string $secure 'ssl'  → implicit TLS, whole session encrypted (port 465)
+     *                       'tls'  → plain connect, upgraded with STARTTLS (port 587)
+     *                       'none' → no encryption (only sane for localhost relays)
+     */
+    public function __construct(string $host, int $port, string $secure = 'ssl', int $timeout = 20)
     {
+        $this->secure = $secure;
+
         $context = stream_context_create([
             'ssl' => [
                 'verify_peer'       => true,
@@ -295,9 +337,9 @@ final class SmtpClient
             ],
         ]);
 
-        // Port 465 is implicit TLS: the connection is encrypted before the greeting.
+        $scheme = $secure === 'ssl' ? 'ssl' : 'tcp';
         $socket = @stream_socket_client(
-            sprintf('ssl://%s:%d', $host, $port),
+            sprintf('%s://%s:%d', $scheme, $host, $port),
             $errno,
             $errstr,
             $timeout,
@@ -306,7 +348,7 @@ final class SmtpClient
         );
 
         if ($socket === false) {
-            throw new SmtpException("connect failed: $errstr ($errno)");
+            throw new SmtpException("connect failed to $scheme://$host:$port — $errstr ($errno)");
         }
 
         $this->socket = $socket;
@@ -356,8 +398,20 @@ final class SmtpClient
     public function authenticate(string $username, string $password, string $ehloDomain): void
     {
         $this->send('EHLO ' . $ehloDomain, 250);
+
+        if ($this->secure === 'tls') {
+            $this->send('STARTTLS', 220);
+            $ok = @stream_socket_enable_crypto($this->socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
+            if ($ok !== true) {
+                throw new SmtpException('STARTTLS negotiation failed');
+            }
+            // The server forgets everything announced before the upgrade.
+            $this->send('EHLO ' . $ehloDomain, 250);
+        }
+
         $this->send('AUTH LOGIN', 334);
         $this->send(base64_encode($username), 334);
+        // A 535 here is almost always a stale password in the config file.
         $this->send(base64_encode($password), 235);
     }
 
@@ -390,7 +444,11 @@ final class SmtpClient
 
 $client = null;
 try {
-    $client = new SmtpClient((string) $config['host'], (int) $config['port']);
+    $client = new SmtpClient(
+        (string) $config['host'],
+        (int) $config['port'],
+        isset($config['secure']) ? (string) $config['secure'] : 'ssl'
+    );
     $client->authenticate(
         (string) $config['username'],
         (string) $config['password'],
@@ -398,9 +456,11 @@ try {
     );
     $client->sendMessage($fromAddress, $toAddress, $payload);
 } catch (Throwable $e) {
-    // Never leak SMTP internals to the browser; the log is where the detail belongs.
+    // The log always gets the detail; the browser only when debug is enabled.
     error_log('contact.php: send failed: ' . $e->getMessage());
-    fail(502, 'send_failed');
+    // 4xx and not 5xx: Cloudflare replaces origin 5xx with its own error page,
+    // swallowing the JSON body that explains what actually went wrong.
+    fail(MAIL_FAILED_STATUS, 'send_failed', $e->getMessage());
 } finally {
     if ($client !== null) {
         $client->close();
