@@ -91,7 +91,10 @@ export class AccessGateComponent {
         },
         error: (err: unknown) => {
           const code = DemoAccessService.errorCode(err);
-          this.registerError.set(code === 'rate_limited' ? t.gate_rate : t.gate_register_failed);
+          const base = code === 'rate_limited' ? t.gate_rate : t.gate_register_failed;
+          // Present only while the server runs with debug enabled.
+          const detail = DemoAccessService.errorDetail(err);
+          this.registerError.set(detail ? `${base} (${detail})` : base);
         },
       });
   }

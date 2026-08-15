@@ -149,6 +149,12 @@ export class ContactComponent {
         this.toasts.error(t.contact_err_title, t.contact_err_rate);
         return;
       }
+      // The server attaches `detail` only while running with debug enabled.
+      const detail = (err.error as { detail?: string } | null)?.detail;
+      if (typeof detail === 'string' && detail !== '') {
+        this.toasts.error(t.contact_err_title, `${t.contact_err_body} (${detail})`);
+        return;
+      }
     }
 
     this.toasts.error(t.contact_err_title, t.contact_err_body);

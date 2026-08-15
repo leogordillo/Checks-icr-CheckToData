@@ -27,6 +27,13 @@ const MAIL_CONFIG_CANDIDATES = [
 /** Max accepted submissions per IP per hour. */
 const RATE_LIMIT_PER_HOUR = 5;
 
+/**
+ * Status returned when the mail could not be sent. Deliberately a 4xx: Cloudflare
+ * sits in front of this site and replaces origin 5xx responses with its own error
+ * page, swallowing the JSON body needed to diagnose the failure.
+ */
+const MAIL_FAILED_STATUS = 424; // Failed Dependency
+
 /** Field length caps, applied after trimming. */
 const MAX_LENGTHS = [
     'name'    => 120,
@@ -50,9 +57,35 @@ function respond(int $status, array $payload): void
     exit;
 }
 
-function fail(int $status, string $code): void
+/**
+ * @param string|null $detail Technical cause. Only reaches the browser when the
+ *                            config sets 'debug' => true; server internals must
+ *                            not leak by default.
+ */
+function fail(int $status, string $code, ?string $detail = null): void
 {
-    respond($status, ['ok' => false, 'error' => $code]);
+    $payload = ['ok' => false, 'error' => $code];
+    if ($detail !== null && contact_debug_enabled()) {
+        $payload['detail'] = $detail;
+    }
+    respond($status, $payload);
+}
+
+function contact_debug_enabled(): bool
+{
+    static $cached = null;
+    if ($cached !== null) {
+        return $cached;
+    }
+    $cached = false;
+    foreach (MAIL_CONFIG_CANDIDATES as $candidate) {
+        if (is_readable($candidate)) {
+            $config = @require $candidate;
+            $cached = is_array($config) && !empty($config['debug']);
+            break;
+        }
+    }
+    return $cached;
 }
 
 // ── Method guard ────────────────────────────────────────────────────────────────
@@ -211,7 +244,13 @@ if (!is_array($config)) {
     fail(500, 'server_misconfigured');
 }
 
-foreach (['host', 'port', 'username', 'password', 'from', 'to'] as $key) {
+// Credentials are only required when the relay actually asks for them.
+$useAuth = !isset($config['auth']) || (bool) $config['auth'];
+$requiredKeys = $useAuth
+    ? ['host', 'port', 'username', 'password', 'from', 'to']
+    : ['host', 'port', 'from', 'to'];
+
+foreach ($requiredKeys as $key) {
     if (empty($config[$key])) {
         error_log("contact.php: mail config missing key '$key'");
         fail(500, 'server_misconfigured');
@@ -285,28 +324,61 @@ final class SmtpClient
     /** @var resource */
     private $socket;
 
-    public function __construct(string $host, int $port, int $timeout = 20)
-    {
+    private string $secure;
+
+    /**
+     * @param string $secure     'ssl'  → implicit TLS, whole session encrypted (port 465)
+     *                           'tls'  → plain connect, upgraded with STARTTLS (port 587)
+     *                           'none' → no encryption (only sane for localhost relays)
+     * @param bool   $verifyCert Set false when the mail server presents a certificate
+     *                           PHP cannot validate — common on shared hosting, where
+     *                           the CA bundle is missing or the cert does not match the
+     *                           host name. Traffic stays encrypted either way.
+     */
+    public function __construct(
+        string $host,
+        int $port,
+        string $secure = 'ssl',
+        bool $verifyCert = true,
+        int $timeout = 20
+    ) {
+        $this->secure = $secure;
+
         $context = stream_context_create([
             'ssl' => [
-                'verify_peer'       => true,
-                'verify_peer_name'  => true,
-                'allow_self_signed' => false,
+                'verify_peer'       => $verifyCert,
+                'verify_peer_name'  => $verifyCert,
+                'allow_self_signed' => !$verifyCert,
             ],
         ]);
 
-        // Port 465 is implicit TLS: the connection is encrypted before the greeting.
-        $socket = @stream_socket_client(
-            sprintf('ssl://%s:%d', $host, $port),
+        $scheme = $secure === 'ssl' ? 'ssl' : 'tcp';
+
+        // A rejected TLS handshake raises several warnings in cascade, and only the
+        // FIRST carries the OpenSSL reason — the last one is a generic "Unknown
+        // error". error_get_last() would return exactly the useless one, so collect
+        // them all instead of suppressing with @.
+        $warnings = [];
+        set_error_handler(static function (int $no, string $message) use (&$warnings): bool {
+            $warnings[] = $message;
+            return true; // handled: keep it out of the output
+        });
+        $socket = stream_socket_client(
+            sprintf('%s://%s:%d', $scheme, $host, $port),
             $errno,
             $errstr,
             $timeout,
             STREAM_CLIENT_CONNECT,
             $context
         );
+        restore_error_handler();
 
         if ($socket === false) {
-            throw new SmtpException("connect failed: $errstr ($errno)");
+            $reason = $warnings !== [] ? implode(' | ', $warnings) : ($errstr ?: 'unknown error');
+            $hint = ($errno === 0 && $verifyCert)
+                ? " [errno 0 means the failure was above TCP; if it mentions the certificate, try 'verify_cert' => false]"
+                : '';
+            throw new SmtpException("connect failed to $scheme://$host:$port — $reason ($errno)$hint");
         }
 
         $this->socket = $socket;
@@ -353,11 +425,40 @@ final class SmtpClient
         return $this->expect($expected);
     }
 
-    public function authenticate(string $username, string $password, string $ehloDomain): void
+    /** Greets the server and upgrades the channel when STARTTLS is configured. */
+    public function handshake(string $ehloDomain): void
     {
         $this->send('EHLO ' . $ehloDomain, 250);
+
+        if ($this->secure === 'tls') {
+            $this->send('STARTTLS', 220);
+            $warnings = [];
+            set_error_handler(static function (int $no, string $message) use (&$warnings): bool {
+                $warnings[] = $message;
+                return true;
+            });
+            $ok = stream_socket_enable_crypto($this->socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
+            restore_error_handler();
+            if ($ok !== true) {
+                throw new SmtpException(
+                    'STARTTLS failed: ' . ($warnings !== [] ? implode(' | ', $warnings) : 'unknown error')
+                );
+            }
+            // The server forgets everything announced before the upgrade.
+            $this->send('EHLO ' . $ehloDomain, 250);
+        }
+    }
+
+    /**
+     * Only for relays that require credentials. A local relay usually accepts mail
+     * from its own machine unauthenticated, and answering AUTH with a 502 there
+     * would abort a session that was otherwise fine.
+     */
+    public function authenticate(string $username, string $password): void
+    {
         $this->send('AUTH LOGIN', 334);
         $this->send(base64_encode($username), 334);
+        // A 535 here is almost always a stale password in the config file.
         $this->send(base64_encode($password), 235);
     }
 
@@ -390,17 +491,23 @@ final class SmtpClient
 
 $client = null;
 try {
-    $client = new SmtpClient((string) $config['host'], (int) $config['port']);
-    $client->authenticate(
-        (string) $config['username'],
-        (string) $config['password'],
-        (string) ($_SERVER['HTTP_HOST'] ?? 'checktodata.com')
+    $client = new SmtpClient(
+        (string) $config['host'],
+        (int) $config['port'],
+        isset($config['secure']) ? (string) $config['secure'] : 'ssl',
+        !isset($config['verify_cert']) || (bool) $config['verify_cert']
     );
+    $client->handshake((string) ($_SERVER['HTTP_HOST'] ?? 'checktodata.com'));
+    if ($useAuth) {
+        $client->authenticate((string) $config['username'], (string) $config['password']);
+    }
     $client->sendMessage($fromAddress, $toAddress, $payload);
 } catch (Throwable $e) {
-    // Never leak SMTP internals to the browser; the log is where the detail belongs.
+    // The log always gets the detail; the browser only when debug is enabled.
     error_log('contact.php: send failed: ' . $e->getMessage());
-    fail(502, 'send_failed');
+    // 4xx and not 5xx: Cloudflare replaces origin 5xx with its own error page,
+    // swallowing the JSON body that explains what actually went wrong.
+    fail(MAIL_FAILED_STATUS, 'send_failed', $e->getMessage());
 } finally {
     if ($client !== null) {
         $client->close();

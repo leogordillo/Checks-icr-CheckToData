@@ -47,6 +47,11 @@ que no existen, y la página carga rota o a medias.
 Los chunks viejos que queden huérfanos no rompen nada, pero conviene limpiarlos de vez en
 cuando para que la carpeta no crezca sin control.
 
+> **Los `.php` van dentro del web root, junto a `index.html`.** Son endpoints que el
+> navegador invoca por URL; fuera del web root responden `404 File not found.` Lo único
+> que va un nivel arriba es el archivo de credenciales (y la base `.sqlite`, que se crea
+> sola ahí). Ver el árbol en [contact-form.md](contact-form.md).
+
 ### Lo que NO se sube
 
 - `deploy/` — es la plantilla de credenciales, va **fuera** del web root y se sube una

@@ -134,10 +134,15 @@ viaja en la respuesta HTTP del registro: solo por correo.
 
 | Síntoma | Causa probable |
 |---|---|
+| `404 File not found.` | Los `.php` no están en el web root. Van junto a `index.html`; sólo el config y el `.sqlite` viven un nivel arriba |
 | `server_misconfigured` | Falta `checktodata-mail-config.php` fuera del web root, o PHP no puede crear/escribir el `.sqlite` en esa carpeta |
-| `send_failed` | SMTP rechazó conexión o login — detalle en el error log de PHP del hosting |
+| `send_failed` (HTTP 424) | SMTP rechazó conexión o login — ver [Diagnosticar un fallo de envío](contact-form.md#diagnosticar-un-fallo-de-envío) |
 | El modal dice "clave no válida" con una clave correcta | La DB del servidor se reemplazó/limpió: la clave ya no existe. El sitio se recupera solo pidiendo re-registro |
 | `rate_limited` | Se superó el límite por IP; esperar una hora |
+
+Si el envío falla, el registro **no queda a medias**: la fila recién creada se borra, así
+que la persona puede volver a intentar con el mismo email una vez resuelto el SMTP. Un
+registro que ya existía conserva su clave y su cupo intactos.
 
 En desarrollo (`npm start`) los endpoints PHP no existen, así que el gate no se puede
 probar completo — igual que el formulario de contacto. Ver
