@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { forkJoin, of, TimeoutError } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
@@ -26,7 +27,7 @@ export class CheckDemoComponent {
 
   protected readonly i18n = inject(I18nService);
   protected readonly access = inject(DemoAccessService);
-  private readonly icrApi = inject(IcrApiService);
+  protected readonly icrApi = inject(IcrApiService);
   private readonly toasts = inject(ToastService);
 
   protected readonly gateOpen = signal(false);
@@ -156,6 +157,7 @@ export class CheckDemoComponent {
     this.result.set(null);
     this.endorseResult.set(null);
     this.coldStartDetected.set(false);
+    this.icrApi.resetWakingState();
 
     const clientStart = performance.now();
 
@@ -214,17 +216,32 @@ export class CheckDemoComponent {
       });
   }
 
+  /**
+   * Always returns copy written for the visitor. Raw transport errors ("Http
+   * failure response for https://…: 0 undefined") used to reach the screen, which
+   * reads as a broken product rather than as a service that was merely asleep —
+   * so nothing technical is surfaced here, only in the console for debugging.
+   */
   private extractErrorMessage(err: unknown): string {
+    const t = this.i18n.t();
+    console.error('Check processing failed', err);
+
     if (err instanceof TimeoutError) {
-      return this.i18n.t().err_timeout;
+      return t.err_timeout;
     }
-    if (err && typeof err === 'object' && 'error' in err) {
-      const body = (err as { error?: { detail?: string } }).error;
-      if (body?.detail) return body.detail;
+    if (err instanceof HttpErrorResponse) {
+      // Status 0 (blocked/network) and 503 both mean the engine never answered:
+      // after the retries above, that is a cold start that outlasted the budget.
+      if (err.status === 0 || err.status === 503) {
+        return t.err_cold_start;
+      }
+      // The API's own explanation is safe to show — it describes the check, not
+      // the infrastructure (e.g. an unreadable image).
+      const detail = (err.error as { detail?: string } | null)?.detail;
+      if (typeof detail === 'string' && detail !== '' && detail.length < 200) {
+        return detail;
+      }
     }
-    if (err && typeof err === 'object' && 'message' in err) {
-      return String((err as { message: unknown }).message);
-    }
-    return 'Unknown error';
+    return t.err_generic;
   }
 }

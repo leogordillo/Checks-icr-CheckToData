@@ -88,6 +88,16 @@ h2 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
   gap: 12px;
   margin-bottom: 14px;
 }
+/* Shown mid-run, so it fades in instead of snapping into place under the spinner. */
+.notice-box.waking { animation: notice-in 220ms ease-out; }
+@keyframes notice-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .notice-box.waking { animation: none; }
+}
+
 .notice-body { flex: 1; font-size: 12.5px; }
 .notice-title { font-weight: 600; margin-bottom: 2px; color: #09090b; }
 .notice-detail { color: #52525b; }

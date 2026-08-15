@@ -104,6 +104,8 @@ export class ResultsComponent {
   readonly errorMsg = input('');
   readonly showSignatureToggleOn = input(false);
   readonly coldStartDetected = input(false);
+  /** The API is being retried because the engine is still booting. */
+  readonly wakingUp = input(false);
 
   readonly retry = output<void>();
 
@@ -262,6 +264,17 @@ export class ResultsComponent {
   });
 
   protected readonly elapsedLabel = computed(() => this.elapsedSec().toFixed(1) + 's');
+
+  /**
+   * A run that passes this mark is being served by a container that had to boot.
+   * Saying so while the visitor waits keeps a 30s first run from reading as a
+   * hang — silence is what makes it feel broken.
+   */
+  private static readonly SLOW_RUN_HINT_SEC = 5;
+
+  protected readonly showWakingNotice = computed(
+    () => this.isProcessing() && (this.wakingUp() || this.elapsedSec() > ResultsComponent.SLOW_RUN_HINT_SEC),
+  );
 
   protected readonly signatureResult = computed(() => this.result()?.classification?.signature?.result);
   protected readonly showSignature = computed(
