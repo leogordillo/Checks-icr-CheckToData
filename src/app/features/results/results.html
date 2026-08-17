@@ -114,7 +114,7 @@
           <tbody>
             @for (row of tableRows(); track row.key) {
               @if (row.kind === 'field') {
-                <tr [class.low]="row.tone.level === 'low'">
+                <tr [class.low]="row.tone.level === 'low'" [class.group-start]="row.groupStart">
                   <td class="field-label">{{ row.label }}</td>
                   <td class="field-value">
                     <div class="mono">{{ row.value || '—' }}</div>
@@ -150,7 +150,7 @@
                   it shows a badge instead of a confidence bar (there is no percentage to
                   report here) and is visually set apart from the rows above.
                 -->
-                <tr class="verdict-row" [class.mismatch]="row.status === 'mismatch'">
+                <tr class="verdict-row" [class.mismatch]="row.status === 'mismatch'" [class.group-start]="row.groupStart">
                   <td class="field-label">{{ row.label }}</td>
                   <td class="field-value">
                     <div class="verdict-values mono">
@@ -190,7 +190,7 @@
                   confidence bar — except when the API reports no evidence, where a 0%
                   bar would read as "very low confidence" instead of "not evaluated".
                 -->
-                <tr class="verdict-row type-row">
+                <tr class="verdict-row type-row" [class.group-start]="row.groupStart">
                   <td class="field-label">{{ row.label }}</td>
                   <td class="field-value">
                     <div class="mono">{{ row.value }}</div>

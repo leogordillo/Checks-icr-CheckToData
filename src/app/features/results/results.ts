@@ -9,11 +9,19 @@ import { RawJsonPanelComponent } from './raw-json-panel/raw-json-panel';
 
 type Face = 'front' | 'back';
 
+/**
+ * The four bands the results table reads in. They are marked with a divider rather
+ * than with header rows: the table is already 12 rows tall, and four more rows of
+ * chrome would push the classification band below the fold on a laptop.
+ */
+export type RowGroup = 'amount' | 'parties' | 'document' | 'classification';
+
 interface FrontFieldDef {
   /** Uppercase key as it appears in the flat `entities` bag, e.g. `PAYEE`. */
   key: string;
   labelKey: keyof ReturnType<I18nService['t']>;
   normalizedKey?: keyof NonNullable<PredictResponse['normalized_properties']>;
+  group: RowGroup;
   wide?: boolean;
 }
 
@@ -37,7 +45,14 @@ export interface MicrPart {
   value: string;
 }
 
-export interface FieldRow {
+/** Band membership, plus the flag that draws the divider above a band's first row. */
+interface Grouped {
+  group: RowGroup;
+  /** Set on the first row of every band except the first, where the header rule already divides. */
+  groupStart?: boolean;
+}
+
+export interface FieldRow extends Grouped {
   kind: 'field';
   key: string;
   label: string;
@@ -56,7 +71,7 @@ export interface FieldRow {
  * the API reports `null` when it found no evidence for a class, and that has to
  * render as "no evidence" rather than as a 0% bar.
  */
-export interface CheckTypeRow {
+export interface CheckTypeRow extends Grouped {
   kind: 'checkType';
   key: 'CHECK_ACCOUNT_TYPE' | 'CHECK_PURPOSE';
   label: string;
@@ -67,7 +82,7 @@ export interface CheckTypeRow {
   tone: ReturnType<typeof tone> | null;
 }
 
-export interface CarLarRow {
+export interface CarLarRow extends Grouped {
   kind: 'carLar';
   key: 'CAR_LAR';
   label: string;
@@ -111,16 +126,25 @@ function formatAmount(n: number, symbol: string): string {
   return symbol + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+/**
+ * Row order is the reading order of the table, grouped by what each field is about.
+ *
+ * The amounts lead because the CAR/LAR mismatch is the highest-consequence thing on the
+ * page, and it should not need a scroll. Maker address follows the maker it belongs to
+ * rather than trailing the list, which is where it sat only because it was added last.
+ * Order is otherwise free: `scoredKeys` only maps over this array, so the average and
+ * field-count chips are unaffected by it.
+ */
 const FRONT_FIELD_DEFS: FrontFieldDef[] = [
-  { key: 'PAYEE', labelKey: 'f_payee', normalizedKey: 'payee_normalized' },
-  { key: 'MAKER', labelKey: 'f_maker', normalizedKey: 'maker_normalized' },
-  { key: 'AMOUNT', labelKey: 'f_amount', normalizedKey: 'amount_normalized' },
-  { key: 'AMOUNT_WORDS', labelKey: 'f_amount_words', normalizedKey: 'amount_words_normalized' },
-  { key: 'DATE', labelKey: 'f_date', normalizedKey: 'date_normalized' },
-  { key: 'BANK_NAME', labelKey: 'f_bank', normalizedKey: 'bank_name_normalized' },
-  { key: 'CHECK_NUMBER', labelKey: 'f_check_number', normalizedKey: 'check_number_normalized' },
-  { key: 'MICR_LINE', labelKey: 'f_micr_line', normalizedKey: 'micr_line_normalized', wide: true },
-  { key: 'MAKER_ADDRESS', labelKey: 'f_maker_addr', normalizedKey: 'maker_address_normalized' },
+  { key: 'AMOUNT', labelKey: 'f_amount', normalizedKey: 'amount_normalized', group: 'amount' },
+  { key: 'AMOUNT_WORDS', labelKey: 'f_amount_words', normalizedKey: 'amount_words_normalized', group: 'amount' },
+  { key: 'PAYEE', labelKey: 'f_payee', normalizedKey: 'payee_normalized', group: 'parties' },
+  { key: 'MAKER', labelKey: 'f_maker', normalizedKey: 'maker_normalized', group: 'parties' },
+  { key: 'MAKER_ADDRESS', labelKey: 'f_maker_addr', normalizedKey: 'maker_address_normalized', group: 'parties' },
+  { key: 'DATE', labelKey: 'f_date', normalizedKey: 'date_normalized', group: 'document' },
+  { key: 'BANK_NAME', labelKey: 'f_bank', normalizedKey: 'bank_name_normalized', group: 'document' },
+  { key: 'CHECK_NUMBER', labelKey: 'f_check_number', normalizedKey: 'check_number_normalized', group: 'document' },
+  { key: 'MICR_LINE', labelKey: 'f_micr_line', normalizedKey: 'micr_line_normalized', group: 'document', wide: true },
 ];
 
 /** The parts the MICR line breaks down into, in the order they appear on the check. */
@@ -276,6 +300,7 @@ export class ResultsComponent {
     return {
       kind: 'carLar',
       key: 'CAR_LAR',
+      group: 'amount',
       label: t.f_car_lar,
       desc: t.car_lar_desc,
       car: carNum !== null ? formatAmount(carNum, symbol) : rawCar || '—',
@@ -312,6 +337,7 @@ export class ResultsComponent {
       rows.push({
         kind: 'checkType',
         key: def.key,
+        group: 'classification',
         label: t[def.labelKey],
         // An unmapped value means the API grew a class the front end doesn't know
         // about yet; show it raw instead of mislabeling it as undetermined.
@@ -339,6 +365,7 @@ export class ResultsComponent {
       rows.push({
         kind: 'field',
         key: def.key,
+        group: def.group,
         label: t[def.labelKey],
         value,
         normalized: normalizedStr,
@@ -357,6 +384,15 @@ export class ResultsComponent {
     }
 
     rows.push(...this.checkTypeRows());
+
+    // Marks band boundaries after the fact rather than at push time, so the divider
+    // follows whatever rows actually made it in: a band whose rows were all skipped
+    // (check type against an older API) leaves no stray rule behind.
+    let previousGroup: RowGroup | null = null;
+    for (const row of rows) {
+      row.groupStart = previousGroup !== null && row.group !== previousGroup;
+      previousGroup = row.group;
+    }
 
     return rows;
   });
