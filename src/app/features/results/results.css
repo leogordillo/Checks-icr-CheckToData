@@ -170,10 +170,34 @@ h2 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
 .bar-fill { display: block; height: 100%; }
 .conf-pct { font-size: 12px; font-weight: 600; width: 38px; text-align: right; flex: none; }
 
+/* "No evidence": deliberately not a bar. An empty or zero-width bar reads as a very low
+   score, and the API means something different — it did not evaluate the class. */
+.conf-none { font-size: 11.5px; color: #a1a1aa; font-style: italic; }
+
+/* Parsed MICR parts, shown as a breakdown under the MICR line they come from. */
+.micr-parts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-top: 6px;
+}
+.micr-part { display: inline-flex; align-items: baseline; gap: 6px; }
+.micr-part-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #a1a1aa;
+}
+.micr-part-value { font-size: 11.5px; color: #52525b; }
+
 /* CAR/LAR verdict: a derived control, so it reads as a distinct band rather than as
    one more extracted field. */
 .results-table tbody tr.verdict-row { background: #fafafa; }
 .results-table tbody tr.verdict-row.mismatch { background: #fdf3f3; }
+/* Check-type rows keep a right-aligned confidence cell like the field rows above,
+   overriding the badge alignment the CAR/LAR row uses. */
+.results-table tbody tr.type-row .conf-cell { justify-content: flex-start; }
 
 .verdict-desc {
   margin-top: 5px;

@@ -121,6 +121,18 @@
                     @if (row.showNormalized) {
                       <div class="mono normalized">→ {{ row.normalized }}</div>
                     }
+                    <!-- Parsed sub-parts of the MICR line. A breakdown of the value
+                         above, so they share its row and its confidence. -->
+                    @if (row.micrParts?.length) {
+                      <div class="micr-parts">
+                        @for (part of row.micrParts; track part.label) {
+                          <span class="micr-part">
+                            <span class="micr-part-label">{{ part.label }}</span>
+                            <span class="mono micr-part-value">{{ part.value }}</span>
+                          </span>
+                        }
+                      </div>
+                    }
                   </td>
                   <td class="conf-col" [title]="row.reasons || ''">
                     <div class="conf-cell">
@@ -132,7 +144,7 @@
                     </div>
                   </td>
                 </tr>
-              } @else {
+              } @else if (row.kind === 'carLar') {
                 <!--
                   Derived control rather than an extracted field: it carries a verdict, so
                   it shows a badge instead of a confidence bar (there is no percentage to
@@ -169,6 +181,33 @@
                         {{ row.badge }}
                       </span>
                     </div>
+                  </td>
+                </tr>
+              } @else {
+                <!--
+                  Check type: a document-level classification, so it shares the derived
+                  band with CAR/LAR. It does carry a real score, so it keeps the
+                  confidence bar — except when the API reports no evidence, where a 0%
+                  bar would read as "very low confidence" instead of "not evaluated".
+                -->
+                <tr class="verdict-row type-row">
+                  <td class="field-label">{{ row.label }}</td>
+                  <td class="field-value">
+                    <div class="mono">{{ row.value }}</div>
+                    <div class="verdict-desc">{{ row.desc }}</div>
+                  </td>
+                  <td class="conf-col" [title]="row.reasons || ''">
+                    @if (row.tone; as rowTone) {
+                      <div class="conf-cell">
+                        <span class="dot" [style.background]="rowTone.bar"></span>
+                        <span class="bar-track">
+                          <span class="bar-fill" [style.width]="scorePctFmt(row.score!)" [style.background]="rowTone.bar"></span>
+                        </span>
+                        <span class="num mono conf-pct" [style.color]="rowTone.fg">{{ scorePctFmt(row.score!) }}</span>
+                      </div>
+                    } @else {
+                      <div class="conf-cell conf-none">{{ i18n.t().conf_no_evidence }}</div>
+                    }
                   </td>
                 </tr>
               }

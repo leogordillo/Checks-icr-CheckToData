@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, output, signal } from '@angular/core';
 import { I18nService } from '../../core/i18n.service';
 import { scorePct, tone } from '../../core/confidence';
-import { fieldFlag, fieldReasons, fieldScore, fieldValue, hasField } from '../../core/entities.util';
+import { fieldFlag, fieldReasons, fieldScore, fieldScoreOrNull, fieldValue, hasField } from '../../core/entities.util';
 import { DemoStatus, EndorseResponse, PredictResponse } from '../../core/models';
 import { SignatureBlockComponent } from './signature-block/signature-block';
 import { EndorsementBlockComponent } from './endorsement-block/endorsement-block';
@@ -20,6 +20,23 @@ interface FrontFieldDef {
 /** Verdict of comparing the numeric amount (CAR) against the written one (LAR). */
 type CarLarStatus = 'match' | 'mismatch' | 'unknown';
 
+type I18nKey = keyof ReturnType<I18nService['t']>;
+
+/** One of the two check-type axes returned in `entities`. */
+interface CheckTypeDef {
+  key: 'CHECK_ACCOUNT_TYPE' | 'CHECK_PURPOSE';
+  labelKey: I18nKey;
+  descKey: I18nKey;
+  /** Maps each enum value the API can return to its translated label. */
+  valueKeys: Record<string, I18nKey>;
+}
+
+/** A parsed part of the MICR line, shown as a breakdown rather than a row. */
+export interface MicrPart {
+  label: string;
+  value: string;
+}
+
 export interface FieldRow {
   kind: 'field';
   key: string;
@@ -30,6 +47,24 @@ export interface FieldRow {
   score: number;
   reasons?: string;
   tone: ReturnType<typeof tone>;
+  /** Only populated for the MICR row; empty everywhere else. */
+  micrParts?: MicrPart[];
+}
+
+/**
+ * One check-type axis. Kept apart from `FieldRow` because its score is nullable:
+ * the API reports `null` when it found no evidence for a class, and that has to
+ * render as "no evidence" rather than as a 0% bar.
+ */
+export interface CheckTypeRow {
+  kind: 'checkType';
+  key: 'CHECK_ACCOUNT_TYPE' | 'CHECK_PURPOSE';
+  label: string;
+  value: string;
+  desc: string;
+  score: number | null;
+  reasons?: string;
+  tone: ReturnType<typeof tone> | null;
 }
 
 export interface CarLarRow {
@@ -45,7 +80,7 @@ export interface CarLarRow {
   colors: { bar: string; bg: string; fg: string };
 }
 
-export type ResultRow = FieldRow | CarLarRow;
+export type ResultRow = FieldRow | CarLarRow | CheckTypeRow;
 
 const CAR_LAR_COLORS: Record<CarLarStatus, { bar: string; bg: string; fg: string }> = {
   match: { bar: '#16A34A', bg: '#EAFAF0', fg: '#15803D' },
@@ -86,6 +121,28 @@ const FRONT_FIELD_DEFS: FrontFieldDef[] = [
   { key: 'CHECK_NUMBER', labelKey: 'f_check_number', normalizedKey: 'check_number_normalized' },
   { key: 'MICR_LINE', labelKey: 'f_micr_line', normalizedKey: 'micr_line_normalized', wide: true },
   { key: 'MAKER_ADDRESS', labelKey: 'f_maker_addr', normalizedKey: 'maker_address_normalized' },
+];
+
+/** The parts the MICR line breaks down into, in the order they appear on the check. */
+const MICR_PART_DEFS: { normalizedKey: keyof NonNullable<PredictResponse['normalized_properties']>; labelKey: I18nKey }[] = [
+  { normalizedKey: 'micr_routing_number', labelKey: 'f_micr_routing' },
+  { normalizedKey: 'micr_account_number', labelKey: 'f_micr_account' },
+  { normalizedKey: 'micr_check_number', labelKey: 'f_micr_check' },
+];
+
+const CHECK_TYPE_DEFS: CheckTypeDef[] = [
+  {
+    key: 'CHECK_ACCOUNT_TYPE',
+    labelKey: 'f_check_account_type',
+    descKey: 'check_account_type_desc',
+    valueKeys: { BUSINESS: 'ct_business', PERSONAL: 'ct_personal', UNKNOWN: 'ct_unknown' },
+  },
+  {
+    key: 'CHECK_PURPOSE',
+    labelKey: 'f_check_purpose',
+    descKey: 'check_purpose_desc',
+    valueKeys: { PAYROLL: 'ct_payroll', UNKNOWN: 'ct_unknown' },
+  },
 ];
 
 @Component({
@@ -230,6 +287,44 @@ export class ResultsComponent {
     };
   });
 
+  /**
+   * The two check-type axes, rendered last because they describe the document as a
+   * whole rather than a region of it.
+   *
+   * Like CAR/LAR these are derived, so they stay out of `scoredKeys` and therefore out
+   * of the average-confidence and field-count chips — but unlike CAR/LAR the API does
+   * attach a real score, so they show a bar when there is one to show.
+   */
+  protected readonly checkTypeRows = computed<CheckTypeRow[]>(() => {
+    const r = this.result();
+    const t = this.i18n.t();
+    if (!r) return [];
+
+    const rows: CheckTypeRow[] = [];
+    for (const def of CHECK_TYPE_DEFS) {
+      const raw = fieldValue(r.entities, def.key);
+      // Absent entirely: an older API build that predates check type. Skip the row
+      // rather than showing an "undetermined" verdict the engine never issued.
+      if (raw === '') continue;
+
+      const valueKey = def.valueKeys[raw.toUpperCase()];
+      const score = fieldScoreOrNull(r.entities, def.key);
+      rows.push({
+        kind: 'checkType',
+        key: def.key,
+        label: t[def.labelKey],
+        // An unmapped value means the API grew a class the front end doesn't know
+        // about yet; show it raw instead of mislabeling it as undetermined.
+        value: valueKey ? t[valueKey] : raw,
+        desc: t[def.descKey],
+        score,
+        reasons: fieldReasons(r.entities, def.key),
+        tone: score !== null ? tone(score) : null,
+      });
+    }
+    return rows;
+  });
+
   protected readonly tableRows = computed<ResultRow[]>(() => {
     const r = this.result();
     const t = this.i18n.t();
@@ -251,6 +346,7 @@ export class ResultsComponent {
         score: fieldScore(r.entities, def.key),
         reasons: fieldReasons(r.entities, def.key),
         tone: tone(fieldScore(r.entities, def.key)),
+        micrParts: def.key === 'MICR_LINE' ? this.micrParts() : undefined,
       });
 
       // Sits right below the two amounts it compares, where an operator reads them.
@@ -260,7 +356,26 @@ export class ResultsComponent {
       }
     }
 
+    rows.push(...this.checkTypeRows());
+
     return rows;
+  });
+
+  /**
+   * Routing / account / check number, as parsed out of the MICR line.
+   *
+   * These live only in `normalized_properties` — there is no `MICR_ROUTING` entity and
+   * so no score of their own. They render as a breakdown inside the MICR row instead of
+   * as three rows, which would otherwise need a confidence column we'd have to invent.
+   */
+  private readonly micrParts = computed<MicrPart[]>(() => {
+    const np = this.result()?.normalized_properties;
+    const t = this.i18n.t();
+    if (!np) return [];
+    return MICR_PART_DEFS.flatMap((def) => {
+      const value = np[def.normalizedKey];
+      return value ? [{ label: t[def.labelKey], value: String(value) }] : [];
+    });
   });
 
   protected readonly elapsedLabel = computed(() => this.elapsedSec().toFixed(1) + 's');
@@ -281,9 +396,12 @@ export class ResultsComponent {
     () => this.hasResults() && this.showSignatureToggleOn() && !!this.signatureResult(),
   );
 
-  /** +1 for the derived CAR/LAR row, so the placeholder matches the final row count. */
+  /**
+   * +1 for the derived CAR/LAR row and +2 for the check-type axes, so the placeholder
+   * matches the final row count.
+   */
   protected readonly skeletonCards = computed(() =>
-    Array.from({ length: FRONT_FIELD_DEFS.length + 1 }, (_, i) => i),
+    Array.from({ length: FRONT_FIELD_DEFS.length + 1 + CHECK_TYPE_DEFS.length }, (_, i) => i),
   );
 
   protected readonly scorePctFmt = scorePct;
