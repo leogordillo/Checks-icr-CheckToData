@@ -157,6 +157,9 @@ h2 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
 }
 .results-table thead th.conf-col { width: 220px; }
 .results-table tbody tr { border-top: 1px solid #f4f4f5; }
+/* Section divider. Only darkens the rule the row already had, so grouping costs zero
+   vertical space — the table has to stay readable in one screen. */
+.results-table tbody tr.group-start { border-top-color: #d4d4d8; }
 .results-table tbody tr.low { background: #fde7e708; }
 .results-table tbody td { padding: 12px; vertical-align: top; }
 .field-label { font-size: 13px; font-weight: 600; color: #09090b; white-space: nowrap; width: 1%; }
