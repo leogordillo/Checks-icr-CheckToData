@@ -5,8 +5,8 @@ import { DemoAccessService } from '../../../core/demo-access.service';
 import { I18nService } from '../../../core/i18n.service';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-/** Lenient on purpose: the canonical form is normalized server-side. */
-const KEY_RE = /^[A-Za-z0-9]{4}-?[A-Za-z0-9]{4}$/;
+/** Alphanumerics in a canonical key, rendered as `XXXX-XXXX`. */
+const KEY_LENGTH = 8;
 
 export type GateMode = 'register' | 'key' | 'limit';
 
@@ -103,28 +103,35 @@ export class AccessGateComponent {
     if (this.busy()) return;
     const t = this.i18n.t();
 
-    const raw = this.keyInput.trim();
-    if (!KEY_RE.test(raw)) {
+    // Validate the cleaned form, not what was typed. `trim()` is not enough: the key
+    // arrives by email, and a paste routinely carries an internal space ("ABCD EFGH",
+    // which the server explicitly accepts) or an invisible zero-width character that
+    // trim leaves in place because it is not whitespace. Rejecting those here made the
+    // front end stricter than `normalize_access_key()`, so a key the server would have
+    // taken never reached it.
+    const clean = cleanKey(this.keyInput);
+    if (clean.length !== KEY_LENGTH) {
       this.keyError.set(t.gate_key_invalid);
       return;
     }
+    const key = formatKey(clean);
 
     this.busy.set(true);
     this.keyError.set(null);
 
     // `check` validates without consuming quota; the run itself authorizes later.
     this.access
-      .check(raw)
+      .check(key)
       .pipe(finalize(() => this.busy.set(false)))
       .subscribe({
         next: (balance) => {
-          this.access.storeKey(normalizeKey(raw), balance);
+          this.access.storeKey(key, balance);
           this.unlocked.emit();
         },
         error: (err: unknown) => {
           const code = DemoAccessService.errorCode(err);
           if (code === 'expired' || code === 'exhausted') {
-            this.access.storeKey(normalizeKey(raw), { ok: false, remaining: 0, unlimited: false });
+            this.access.storeKey(key, { ok: false, remaining: 0, unlimited: false });
             this.goTo('limit');
           } else if (code === 'rate_limited') {
             this.keyError.set(t.gate_rate);
@@ -156,7 +163,17 @@ export class AccessGateComponent {
   }
 }
 
-function normalizeKey(raw: string): string {
-  const clean = raw.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+/**
+ * Strips everything that is not alphanumeric and uppercases, mirroring
+ * `normalize_access_key()` in demo-common.php. Deliberately as permissive as the
+ * server: whatever the mail client wrapped around the key — spaces, a stray hyphen,
+ * a zero-width character — is not the visitor's problem to clean up by hand.
+ */
+function cleanKey(raw: string): string {
+  return raw.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+}
+
+/** Renders an already-cleaned 8-character key in its canonical `XXXX-XXXX` form. */
+function formatKey(clean: string): string {
   return clean.slice(0, 4) + '-' + clean.slice(4);
 }
