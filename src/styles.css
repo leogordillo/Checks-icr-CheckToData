@@ -34,3 +34,12 @@ input:focus, textarea:focus { outline: 2px solid #6d42d9; outline-offset: 0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }
+
+/* iOS Safari zooms the whole page whenever a focused field is under 16px, and
+   never zooms back out — the page is left mid-scroll with the field off screen.
+   Raising the size on small viewports is the only reliable way to prevent it;
+   the 14px above still applies everywhere else. */
+@media (max-width: 640px) {
+  input, textarea, select { font-size: 16px; }
+}
+

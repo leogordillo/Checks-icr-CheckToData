@@ -64,3 +64,19 @@
 .remove:hover { background: #f4f4f5; }
 
 .error-msg { font-size: 11.5px; color: #dc2626; margin-top: 6px; }
+
+@media (max-width: 640px) {
+  /* Two stacked dropzones plus the results below make 220px each too tall to
+     scroll past on a phone. */
+  .dropzone { height: 160px; }
+
+  /* 20x20 is well under a comfortable touch target, and this button deletes the
+     selected file — an accidental hit is expensive. Grow the hit area without
+     moving the glyph, which stays optically aligned with the meta row. */
+  .remove { width: 40px; height: 40px; margin: -10px -8px -10px 0; font-size: 18px; }
+
+  /* The magnifier follows the pointer and never fires on touch; the zoom cursor
+     would promise an interaction that cannot happen here. */
+  .preview-img.zoomable { cursor: default; }
+}
+

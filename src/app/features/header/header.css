@@ -37,3 +37,27 @@
   color: #52525b;
 }
 .lang-switch button.active { background: #f4f4f5; color: #6d42d9; }
+
+/* Mobile. Every rule lives inside a max-width query, so the desktop bar above
+   renders exactly as before at any width over 640px. */
+@media (max-width: 640px) {
+  .inner { padding: 0 16px; gap: 12px; }
+  .nav { gap: 18px; }
+  .nav a { font-size: 13px; }
+}
+
+@media (max-width: 560px) {
+  /* Logo + three links + the language switch cannot fit here at any readable
+     size. The links are anchors to sections further down the same page, so
+     dropping them costs a shortcut, not access: scrolling still reaches every
+     section. Revisit if the nav ever points somewhere else. */
+  .nav { display: none; }
+
+  .bar { height: 56px; }
+  .logo { height: 36px; }
+
+  /* Touch targets: 4px of padding on an 11.5px label lands well under the 44px
+     minimum, so pad the buttons out rather than scale the type up. */
+  .lang-switch button { padding: 9px 14px; }
+}
+

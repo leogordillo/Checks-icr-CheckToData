@@ -46,3 +46,13 @@ p { font-size: 15px; line-height: 1.55; color: #52525b; margin: 0 0 12px; max-wi
 @media (max-width: 720px) {
   .hero { grid-template-columns: 1fr; }
 }
+
+@media (max-width: 480px) {
+  /* Three columns still fit at this width, but only once the figures stop
+     competing with the gap for it. */
+  .metrics-grid { gap: 10px; }
+  .metric .value { font-size: 22px; }
+  .metric .unit { font-size: 14px; }
+  .metric { padding-left: 8px; }
+}
+

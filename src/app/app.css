@@ -1,4 +1,6 @@
-.shell { min-height: 100vh; background: #fcfcfd; }
+/* 100vh on mobile counts the browser chrome that scrolls away, leaving a gap at
+   the bottom; dvh tracks the real viewport. The vh line stays as the fallback. */
+.shell { min-height: 100vh; min-height: 100dvh; background: #fcfcfd; }
 .main { max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; }
 
 .footer { border-top: 1px solid #e4e4e7; background: #ffffff; height: 56px; display: flex; align-items: center; }
@@ -15,3 +17,13 @@
 .brand { font-weight: 600; color: #09090b; }
 .footer-right { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: #52525b; }
 .footer-right .dot { width: 6px; height: 6px; background: #0e9c9c; border-radius: 50%; }
+
+/* Mobile. Desktop rules above are untouched: everything here is inside a
+   max-width query, so anything wider than 640px renders exactly as before. */
+@media (max-width: 640px) {
+  .main { padding: 24px 16px 56px; }
+
+  /* The fixed 56px height cannot hold two lines once the footer wraps. */
+  .footer { height: auto; min-height: 56px; padding: 10px 0; }
+  .footer-inner { flex-wrap: wrap; gap: 6px 14px; padding: 0 16px; }
+}
