@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, output, signal } from '@angular/core';
 import { I18nService } from '../../core/i18n.service';
 import { scorePct, tone } from '../../core/confidence';
-import { fieldFlag, fieldReasons, fieldScore, fieldValue, hasField } from '../../core/entities.util';
+import { fieldFlag, fieldReasons, fieldScore, fieldScoreOrNull, fieldValue, hasField } from '../../core/entities.util';
 import { DemoStatus, EndorseResponse, PredictResponse } from '../../core/models';
 import { SignatureBlockComponent } from './signature-block/signature-block';
 import { EndorsementBlockComponent } from './endorsement-block/endorsement-block';
@@ -9,18 +9,50 @@ import { RawJsonPanelComponent } from './raw-json-panel/raw-json-panel';
 
 type Face = 'front' | 'back';
 
+/**
+ * The four bands the results table reads in. They are marked with a divider rather
+ * than with header rows: the table is already 12 rows tall, and four more rows of
+ * chrome would push the classification band below the fold on a laptop.
+ */
+export type RowGroup = 'amount' | 'parties' | 'document' | 'classification';
+
 interface FrontFieldDef {
   /** Uppercase key as it appears in the flat `entities` bag, e.g. `PAYEE`. */
   key: string;
   labelKey: keyof ReturnType<I18nService['t']>;
   normalizedKey?: keyof NonNullable<PredictResponse['normalized_properties']>;
+  group: RowGroup;
   wide?: boolean;
 }
 
 /** Verdict of comparing the numeric amount (CAR) against the written one (LAR). */
 type CarLarStatus = 'match' | 'mismatch' | 'unknown';
 
-export interface FieldRow {
+type I18nKey = keyof ReturnType<I18nService['t']>;
+
+/** One of the two check-type axes returned in `entities`. */
+interface CheckTypeDef {
+  key: 'CHECK_ACCOUNT_TYPE' | 'CHECK_PURPOSE';
+  labelKey: I18nKey;
+  descKey: I18nKey;
+  /** Maps each enum value the API can return to its translated label. */
+  valueKeys: Record<string, I18nKey>;
+}
+
+/** A parsed part of the MICR line, shown as a breakdown rather than a row. */
+export interface MicrPart {
+  label: string;
+  value: string;
+}
+
+/** Band membership, plus the flag that draws the divider above a band's first row. */
+interface Grouped {
+  group: RowGroup;
+  /** Set on the first row of every band except the first, where the header rule already divides. */
+  groupStart?: boolean;
+}
+
+export interface FieldRow extends Grouped {
   kind: 'field';
   key: string;
   label: string;
@@ -30,9 +62,27 @@ export interface FieldRow {
   score: number;
   reasons?: string;
   tone: ReturnType<typeof tone>;
+  /** Only populated for the MICR row; empty everywhere else. */
+  micrParts?: MicrPart[];
 }
 
-export interface CarLarRow {
+/**
+ * One check-type axis. Kept apart from `FieldRow` because its score is nullable:
+ * the API reports `null` when it found no evidence for a class, and that has to
+ * render as "no evidence" rather than as a 0% bar.
+ */
+export interface CheckTypeRow extends Grouped {
+  kind: 'checkType';
+  key: 'CHECK_ACCOUNT_TYPE' | 'CHECK_PURPOSE';
+  label: string;
+  value: string;
+  desc: string;
+  score: number | null;
+  reasons?: string;
+  tone: ReturnType<typeof tone> | null;
+}
+
+export interface CarLarRow extends Grouped {
   kind: 'carLar';
   key: 'CAR_LAR';
   label: string;
@@ -45,7 +95,7 @@ export interface CarLarRow {
   colors: { bar: string; bg: string; fg: string };
 }
 
-export type ResultRow = FieldRow | CarLarRow;
+export type ResultRow = FieldRow | CarLarRow | CheckTypeRow;
 
 const CAR_LAR_COLORS: Record<CarLarStatus, { bar: string; bg: string; fg: string }> = {
   match: { bar: '#16A34A', bg: '#EAFAF0', fg: '#15803D' },
@@ -76,16 +126,47 @@ function formatAmount(n: number, symbol: string): string {
   return symbol + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+/**
+ * Row order is the reading order of the table, grouped by what each field is about.
+ *
+ * The amounts lead because the CAR/LAR mismatch is the highest-consequence thing on the
+ * page, and it should not need a scroll. Maker address follows the maker it belongs to
+ * rather than trailing the list, which is where it sat only because it was added last.
+ * Order is otherwise free: `scoredKeys` only maps over this array, so the average and
+ * field-count chips are unaffected by it.
+ */
 const FRONT_FIELD_DEFS: FrontFieldDef[] = [
-  { key: 'PAYEE', labelKey: 'f_payee', normalizedKey: 'payee_normalized' },
-  { key: 'MAKER', labelKey: 'f_maker', normalizedKey: 'maker_normalized' },
-  { key: 'AMOUNT', labelKey: 'f_amount', normalizedKey: 'amount_normalized' },
-  { key: 'AMOUNT_WORDS', labelKey: 'f_amount_words', normalizedKey: 'amount_words_normalized' },
-  { key: 'DATE', labelKey: 'f_date', normalizedKey: 'date_normalized' },
-  { key: 'BANK_NAME', labelKey: 'f_bank', normalizedKey: 'bank_name_normalized' },
-  { key: 'CHECK_NUMBER', labelKey: 'f_check_number', normalizedKey: 'check_number_normalized' },
-  { key: 'MICR_LINE', labelKey: 'f_micr_line', normalizedKey: 'micr_line_normalized', wide: true },
-  { key: 'MAKER_ADDRESS', labelKey: 'f_maker_addr', normalizedKey: 'maker_address_normalized' },
+  { key: 'AMOUNT', labelKey: 'f_amount', normalizedKey: 'amount_normalized', group: 'amount' },
+  { key: 'AMOUNT_WORDS', labelKey: 'f_amount_words', normalizedKey: 'amount_words_normalized', group: 'amount' },
+  { key: 'PAYEE', labelKey: 'f_payee', normalizedKey: 'payee_normalized', group: 'parties' },
+  { key: 'MAKER', labelKey: 'f_maker', normalizedKey: 'maker_normalized', group: 'parties' },
+  { key: 'MAKER_ADDRESS', labelKey: 'f_maker_addr', normalizedKey: 'maker_address_normalized', group: 'parties' },
+  { key: 'DATE', labelKey: 'f_date', normalizedKey: 'date_normalized', group: 'document' },
+  { key: 'BANK_NAME', labelKey: 'f_bank', normalizedKey: 'bank_name_normalized', group: 'document' },
+  { key: 'CHECK_NUMBER', labelKey: 'f_check_number', normalizedKey: 'check_number_normalized', group: 'document' },
+  { key: 'MICR_LINE', labelKey: 'f_micr_line', normalizedKey: 'micr_line_normalized', group: 'document', wide: true },
+];
+
+/** The parts the MICR line breaks down into, in the order they appear on the check. */
+const MICR_PART_DEFS: { normalizedKey: keyof NonNullable<PredictResponse['normalized_properties']>; labelKey: I18nKey }[] = [
+  { normalizedKey: 'micr_routing_number', labelKey: 'f_micr_routing' },
+  { normalizedKey: 'micr_account_number', labelKey: 'f_micr_account' },
+  { normalizedKey: 'micr_check_number', labelKey: 'f_micr_check' },
+];
+
+const CHECK_TYPE_DEFS: CheckTypeDef[] = [
+  {
+    key: 'CHECK_ACCOUNT_TYPE',
+    labelKey: 'f_check_account_type',
+    descKey: 'check_account_type_desc',
+    valueKeys: { BUSINESS: 'ct_business', PERSONAL: 'ct_personal', UNKNOWN: 'ct_unknown' },
+  },
+  {
+    key: 'CHECK_PURPOSE',
+    labelKey: 'f_check_purpose',
+    descKey: 'check_purpose_desc',
+    valueKeys: { PAYROLL: 'ct_payroll', UNKNOWN: 'ct_unknown' },
+  },
 ];
 
 @Component({
@@ -224,6 +305,7 @@ export class ResultsComponent {
     return {
       kind: 'carLar',
       key: 'CAR_LAR',
+      group: 'amount',
       label: t.f_car_lar,
       desc: t.car_lar_desc,
       car: carNum !== null ? formatAmount(carNum, symbol) : rawCar || '—',
@@ -233,6 +315,45 @@ export class ResultsComponent {
       note,
       colors: CAR_LAR_COLORS[status],
     };
+  });
+
+  /**
+   * The two check-type axes, rendered last because they describe the document as a
+   * whole rather than a region of it.
+   *
+   * Like CAR/LAR these are derived, so they stay out of `scoredKeys` and therefore out
+   * of the average-confidence and field-count chips — but unlike CAR/LAR the API does
+   * attach a real score, so they show a bar when there is one to show.
+   */
+  protected readonly checkTypeRows = computed<CheckTypeRow[]>(() => {
+    const r = this.result();
+    const t = this.i18n.t();
+    if (!r) return [];
+
+    const rows: CheckTypeRow[] = [];
+    for (const def of CHECK_TYPE_DEFS) {
+      const raw = fieldValue(r.entities, def.key);
+      // Absent entirely: an older API build that predates check type. Skip the row
+      // rather than showing an "undetermined" verdict the engine never issued.
+      if (raw === '') continue;
+
+      const valueKey = def.valueKeys[raw.toUpperCase()];
+      const score = fieldScoreOrNull(r.entities, def.key);
+      rows.push({
+        kind: 'checkType',
+        key: def.key,
+        group: 'classification',
+        label: t[def.labelKey],
+        // An unmapped value means the API grew a class the front end doesn't know
+        // about yet; show it raw instead of mislabeling it as undetermined.
+        value: valueKey ? t[valueKey] : raw,
+        desc: t[def.descKey],
+        score,
+        reasons: fieldReasons(r.entities, def.key),
+        tone: score !== null ? tone(score) : null,
+      });
+    }
+    return rows;
   });
 
   protected readonly tableRows = computed<ResultRow[]>(() => {
@@ -249,6 +370,7 @@ export class ResultsComponent {
       rows.push({
         kind: 'field',
         key: def.key,
+        group: def.group,
         label: t[def.labelKey],
         value,
         normalized: normalizedStr,
@@ -256,6 +378,7 @@ export class ResultsComponent {
         score: fieldScore(r.entities, def.key),
         reasons: fieldReasons(r.entities, def.key),
         tone: tone(fieldScore(r.entities, def.key)),
+        micrParts: def.key === 'MICR_LINE' ? this.micrParts() : undefined,
       });
 
       // Sits right below the two amounts it compares, where an operator reads them.
@@ -265,7 +388,35 @@ export class ResultsComponent {
       }
     }
 
+    rows.push(...this.checkTypeRows());
+
+    // Marks band boundaries after the fact rather than at push time, so the divider
+    // follows whatever rows actually made it in: a band whose rows were all skipped
+    // (check type against an older API) leaves no stray rule behind.
+    let previousGroup: RowGroup | null = null;
+    for (const row of rows) {
+      row.groupStart = previousGroup !== null && row.group !== previousGroup;
+      previousGroup = row.group;
+    }
+
     return rows;
+  });
+
+  /**
+   * Routing / account / check number, as parsed out of the MICR line.
+   *
+   * These live only in `normalized_properties` — there is no `MICR_ROUTING` entity and
+   * so no score of their own. They render as a breakdown inside the MICR row instead of
+   * as three rows, which would otherwise need a confidence column we'd have to invent.
+   */
+  private readonly micrParts = computed<MicrPart[]>(() => {
+    const np = this.result()?.normalized_properties;
+    const t = this.i18n.t();
+    if (!np) return [];
+    return MICR_PART_DEFS.flatMap((def) => {
+      const value = np[def.normalizedKey];
+      return value ? [{ label: t[def.labelKey], value: String(value) }] : [];
+    });
   });
 
   protected readonly elapsedLabel = computed(() => this.elapsedSec().toFixed(1) + 's');
@@ -286,9 +437,12 @@ export class ResultsComponent {
     () => this.hasResults() && this.showSignatureToggleOn() && !!this.signatureResult(),
   );
 
-  /** +1 for the derived CAR/LAR row, so the placeholder matches the final row count. */
+  /**
+   * +1 for the derived CAR/LAR row and +2 for the check-type axes, so the placeholder
+   * matches the final row count.
+   */
   protected readonly skeletonCards = computed(() =>
-    Array.from({ length: FRONT_FIELD_DEFS.length + 1 }, (_, i) => i),
+    Array.from({ length: FRONT_FIELD_DEFS.length + 1 + CHECK_TYPE_DEFS.length }, (_, i) => i),
   );
 
   protected readonly scorePctFmt = scorePct;

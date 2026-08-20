@@ -13,6 +13,19 @@ export function fieldScore(entities: EntitiesBag, field: string): number {
   return typeof v === 'number' ? v : 0;
 }
 
+/**
+ * Reads `<FIELD>_CONF` preserving the "no evidence" case as `null`.
+ *
+ * `fieldScore` collapses a missing or null score to `0`, which is right for the
+ * extracted fields but wrong for the check-type keys: the API sends an explicit
+ * `null` there to say it found nothing to support a class, and painting that as
+ * 0% would read as "very low confidence" instead of "not evaluated".
+ */
+export function fieldScoreOrNull(entities: EntitiesBag, field: string): number | null {
+  const v = entities[`${field}_CONF`];
+  return typeof v === 'number' ? v : null;
+}
+
 /** Reads `<FIELD>_CONF_REASONS`, the human-readable scoring explanation, when present. */
 export function fieldReasons(entities: EntitiesBag, field: string): string | undefined {
   const v = entities[`${field}_CONF_REASONS`];
