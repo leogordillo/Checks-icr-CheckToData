@@ -190,8 +190,13 @@ export class ResultsComponent {
     const rawLar = fieldValue(r.entities, 'AMOUNT_WORDS');
     if (rawCar === '' && rawLar === '') return null;
 
+    // The raw CAR is already a numeric string, so falling back to it is safe. The raw LAR
+    // is a phrase: running it through `parseAmount` would keep whatever stray digits the
+    // ICR read ("... and 400" -> 400.00) and invent an amount nobody wrote. The LAR may
+    // only come from a value the backend already validated as money; without it the
+    // verdict is "not verifiable".
     const carNum = parseAmount(r.normalized_properties?.amount_normalized ?? rawCar);
-    const larNum = parseAmount(r.normalized_properties?.amount_words_normalized ?? rawLar);
+    const larNum = parseAmount(r.normalized_properties?.amount_words_normalized);
     const symbol = currencySymbol(rawCar);
 
     // The API's own verdict wins when present; comparing the normalized numbers is the
