@@ -11,6 +11,20 @@ backend propio salvo un único script PHP para el formulario de contacto.
 | [contact-form.md](contact-form.md) | Formulario de contacto: configuración de credenciales, arquitectura, diagnóstico |
 | [demo-access.md](demo-access.md) | Registro con clave por email para usar la demo: cupos, base SQLite, métricas |
 | [troubleshooting.md](troubleshooting.md) | Problemas conocidos y trampas ya resueltas |
+| [archivo/](archivo/) | Documentos históricos (mockups de diseño superados, etc.) — no es fuente de verdad |
+
+### Sin documentar todavía
+
+Estas features tienen cambios recientes en el código pero ningún documento dedicado.
+Si vas a tocarlas, conviene revisar el componente directamente en vez de asumir que hay
+una nota escrita:
+
+- **Tabla de resultados por bandas** y su lógica de confianza — `src/app/features/**/results.ts`, `core/confidence.ts`.
+- **Tipo de cheque y desglose MICR en el front** — `endorsement-block`, `signature-block`. Para el contrato de datos que expone el backend, ver `docs/definitions/check-type-classification.md` en el repo `Checks-icr-fastapi` (repo separado, no es un link válido entre repos de GitHub).
+- **`product-spec`** (ficha técnica del producto).
+- **`raw-json-panel`** (panel de JSON crudo de la respuesta de la API) — `models.ts`, `entities.util.ts`.
+- **Adaptación a pantallas de celular** (responsive).
+- **Conversión TIFF→preview** — documentado solo como bug ya resuelto en [troubleshooting.md](troubleshooting.md); el funcionamiento normal vive en `tiff-preview.util.ts` / `file-validation.util.ts` sin nota aparte.
 
 ## Panorama general
 
