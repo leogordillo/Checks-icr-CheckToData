@@ -7,30 +7,21 @@ resolvió** pero conviene documentar porque volvería a morder si alguien toca e
 
 ## Abierto
 
-### CORS: la API rechaza todos los orígenes
+### CORS: `localhost:4200` no está habilitado en producción
 
-**Síntoma.** Al procesar un cheque, el navegador muestra un error de red genérico —
-`status: 0`, `statusText: undefined`, o *«Missing Allow Origin Header»*. No es un error
-HTTP normal: el navegador bloquea la respuesta antes de que llegue al código, así que
-Angular no puede reportar nada más específico.
+El Container App `ocr-ch` tiene `ALLOWED_ORIGINS` seteado explícitamente a
+`https://checktodata.com,https://www.checktodata.com` (verificado en Azure, 2026-09-08).
+El sitio publicado funciona bien; lo que **no** funciona es correr el frontend en
+`npm start` (`localhost:4200`) contra la API de **producción** — el preflight se rechaza
+para ese origen porque no está en la lista.
 
-**Causa.** El backend rechaza el *preflight* de **todos** los orígenes probados —
-`checktodata.com`, `www.checktodata.com` e incluso `localhost:4200`:
+El código del backend (`Checks-icr-fastapi`, `app/main.py`) trae `localhost:4200` en su
+*default* desde el commit `55b4063`, pero ese default **no aplica** acá: la variable de
+entorno del Container App está seteada explícitamente y gana sobre el default del código.
 
-```
-OPTIONS /api/predict   Origin: https://checktodata.com   →  400 "Disallowed CORS origin"
-```
-
-La lista de orígenes permitidos sale de la variable de entorno `ALLOWED_ORIGINS`, que el
-backend lee al arrancar (`app/main.py`). En el despliegue actual quedó con un valor que no
-incluye ningún origen real.
-
-**Por qué `/api/health` sí anda.** Es un `GET` simple que no dispara preflight. Que el
-health responda 200 **no** significa que CORS esté bien.
-
-**Solución.** No se arregla desde este proyecto: hay que corregir `ALLOWED_ORIGINS` en el
-Container App `ocr-ch` para que incluya el dominio del sitio. Mientras siga así, ningún
-build —local o publicado— va a poder llamar a `/predict` desde el navegador.
+**Solución si hace falta probar localhost contra producción.** Agregar
+`http://localhost:4200` a `ALLOWED_ORIGINS` en el Container App `ocr-ch`. No es necesario
+para el funcionamiento del sitio publicado.
 
 ### Arranque en frío de la API
 
